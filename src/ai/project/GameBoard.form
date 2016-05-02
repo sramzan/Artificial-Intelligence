@@ -74,7 +74,7 @@
         <Component class="ai.project.GameSquare" name="square0">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -109,7 +109,7 @@
         <Component class="ai.project.GameSquare" name="square4">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -123,7 +123,7 @@
         <Component class="ai.project.GameSquare" name="square6">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -131,7 +131,7 @@
         <Component class="ai.project.GameSquare" name="square7">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -139,7 +139,7 @@
         <Component class="ai.project.GameSquare" name="square8">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -159,7 +159,7 @@
         <Component class="ai.project.GameSquare" name="square11">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -167,7 +167,7 @@
         <Component class="ai.project.GameSquare" name="square12">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -175,7 +175,7 @@
         <Component class="ai.project.GameSquare" name="square13">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -195,7 +195,7 @@
         <Component class="ai.project.GameSquare" name="square16">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -203,7 +203,7 @@
         <Component class="ai.project.GameSquare" name="square17">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -211,7 +211,7 @@
         <Component class="ai.project.GameSquare" name="square18">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -225,7 +225,7 @@
         <Component class="ai.project.GameSquare" name="square20">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
@@ -260,7 +260,7 @@
         <Component class="ai.project.GameSquare" name="square24">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="cc" green="cc" red="cc" type="rgb"/>
+              <Color blue="c0" green="c0" id="lightGray" palette="1" red="c0" type="palette"/>
             </Property>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>

@@ -78,7 +78,7 @@ public class GameBoard extends javax.swing.JFrame {
 
         jPanel1.setLayout(new java.awt.GridLayout(5, 5, 1, 1));
 
-        square0.setBackground(new java.awt.Color(204, 204, 204));
+        square0.setBackground(java.awt.Color.lightGray);
         square0.setOpaque(true);
         jPanel1.add(square0);
 
@@ -97,7 +97,7 @@ public class GameBoard extends javax.swing.JFrame {
         square3.setOpaque(true);
         jPanel1.add(square3);
 
-        square4.setBackground(new java.awt.Color(204, 204, 204));
+        square4.setBackground(java.awt.Color.lightGray);
         square4.setOpaque(true);
         jPanel1.add(square4);
 
@@ -105,15 +105,15 @@ public class GameBoard extends javax.swing.JFrame {
         square5.setOpaque(true);
         jPanel1.add(square5);
 
-        square6.setBackground(new java.awt.Color(204, 204, 204));
+        square6.setBackground(java.awt.Color.lightGray);
         square6.setOpaque(true);
         jPanel1.add(square6);
 
-        square7.setBackground(new java.awt.Color(204, 204, 204));
+        square7.setBackground(java.awt.Color.lightGray);
         square7.setOpaque(true);
         jPanel1.add(square7);
 
-        square8.setBackground(new java.awt.Color(204, 204, 204));
+        square8.setBackground(java.awt.Color.lightGray);
         square8.setOpaque(true);
         jPanel1.add(square8);
 
@@ -125,15 +125,15 @@ public class GameBoard extends javax.swing.JFrame {
         square10.setOpaque(true);
         jPanel1.add(square10);
 
-        square11.setBackground(new java.awt.Color(204, 204, 204));
+        square11.setBackground(java.awt.Color.lightGray);
         square11.setOpaque(true);
         jPanel1.add(square11);
 
-        square12.setBackground(new java.awt.Color(204, 204, 204));
+        square12.setBackground(java.awt.Color.lightGray);
         square12.setOpaque(true);
         jPanel1.add(square12);
 
-        square13.setBackground(new java.awt.Color(204, 204, 204));
+        square13.setBackground(java.awt.Color.lightGray);
         square13.setOpaque(true);
         jPanel1.add(square13);
 
@@ -145,15 +145,15 @@ public class GameBoard extends javax.swing.JFrame {
         square15.setOpaque(true);
         jPanel1.add(square15);
 
-        square16.setBackground(new java.awt.Color(204, 204, 204));
+        square16.setBackground(java.awt.Color.lightGray);
         square16.setOpaque(true);
         jPanel1.add(square16);
 
-        square17.setBackground(new java.awt.Color(204, 204, 204));
+        square17.setBackground(java.awt.Color.lightGray);
         square17.setOpaque(true);
         jPanel1.add(square17);
 
-        square18.setBackground(new java.awt.Color(204, 204, 204));
+        square18.setBackground(java.awt.Color.lightGray);
         square18.setOpaque(true);
         jPanel1.add(square18);
 
@@ -161,7 +161,7 @@ public class GameBoard extends javax.swing.JFrame {
         square19.setOpaque(true);
         jPanel1.add(square19);
 
-        square20.setBackground(new java.awt.Color(204, 204, 204));
+        square20.setBackground(java.awt.Color.lightGray);
         square20.setOpaque(true);
         jPanel1.add(square20);
 
@@ -180,7 +180,7 @@ public class GameBoard extends javax.swing.JFrame {
         square23.setOpaque(true);
         jPanel1.add(square23);
 
-        square24.setBackground(new java.awt.Color(204, 204, 204));
+        square24.setBackground(java.awt.Color.lightGray);
         square24.setOpaque(true);
         jPanel1.add(square24);
 
@@ -748,7 +748,7 @@ public class GameBoard extends javax.swing.JFrame {
         oldLoc.markSquareAsEmpty();
         oldLoc.setText("");
         oldLoc.setPieceColor("none");
-        oldLoc.setBackground(Color.GRAY);
+        oldLoc.setBackground(Color.LIGHT_GRAY);
     }
     
     public static void updateBoxColoring(GameSquare oldLoc, GameSquare newLoc){
