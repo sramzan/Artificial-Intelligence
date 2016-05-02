@@ -339,41 +339,62 @@ public class GameBoard extends javax.swing.JFrame {
         return numOfVerticalPieces;
     }
     
-    public static int getNumOfDiagonalPieces(GameSquare currentSquare){
+    public static int getNumOfDiagonalPieces(GameSquare currentSquare, String diagonalDirection){
         int currentCol = currentSquare.getRelativeY();
         int currentRow = currentSquare.getRelativeX();
         int numOfDiagonalPieces = 0;
-        while (currentRow < ROWS && currentCol < COLUMNS){
-            Point currentPoint = new Point(currentRow, currentCol);
-            numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
-            currentRow++; currentCol++;
+        Boolean isTopLeftToBottomRightSearch = false;
+        Boolean isBottomLeftToTopRightSearch = false;
+      
+        switch(diagonalDirection){
+            case "topLeftToBottomRight":
+                isTopLeftToBottomRightSearch = true;
+                break;
+            case "bottomLeftToTopRight":
+                isBottomLeftToTopRightSearch = true;
+                break;
         }
         
-        currentRow = currentSquare.getRelativeX();  
-        currentCol = currentSquare.getRelativeY();
-        while (currentRow > 0 && currentCol > 0){
-            currentRow--;  currentCol--;    
-            Point currentPoint = new Point(currentRow, currentCol);
-            numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+        if (isTopLeftToBottomRightSearch){
+            while (currentRow < ROWS && currentCol < COLUMNS){
+                Point currentPoint = new Point(currentRow, currentCol);
+                numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+                currentRow++; currentCol++;
+            }
         }
         
-        currentRow = currentSquare.getRelativeX();  
-        currentCol = currentSquare.getRelativeY();
-        while (currentRow > 0 && currentCol < COLUMNS-1){
-            currentRow--;  currentCol++;    
-            Point currentPoint = new Point(currentRow, currentCol);
-            numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+        if (isTopLeftToBottomRightSearch){
+            currentRow = currentSquare.getRelativeX();  
+            currentCol = currentSquare.getRelativeY();
+            while (currentRow > 0 && currentCol > 0){
+                currentRow--;  currentCol--;
+                Point currentPoint = new Point(currentRow, currentCol);
+                numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+            }
         }
         
-        currentRow = currentSquare.getRelativeX();  
-        currentCol = currentSquare.getRelativeY();
-        while (currentRow < ROWS-1 && currentCol > 0){
-            currentRow++;  currentCol--;    
-            Point currentPoint = new Point(currentRow, currentCol);
-            numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+        if (isBottomLeftToTopRightSearch){
+            currentRow = currentSquare.getRelativeX();  
+            currentCol = currentSquare.getRelativeY();
+            while (currentRow >= 0 && currentCol < COLUMNS){  
+                Point currentPoint = new Point(currentRow, currentCol);
+                numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces);
+                currentRow--;  currentCol++;  
+            }
+        }
+        
+        if (isBottomLeftToTopRightSearch){
+            currentRow = currentSquare.getRelativeX();  
+            currentCol = currentSquare.getRelativeY();
+            while (currentRow < (ROWS-1) && currentCol > 0){   
+                currentRow++;  currentCol--; 
+                Point currentPoint = new Point(currentRow, currentCol);
+                numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces); 
+            }
         }
         return numOfDiagonalPieces;
     }
+    
     // TODO - think about switching the check num of pieces in diff directions to simply looping through the players arrayList
     public static void getValidMovesInHorizontal(GameSquare piece, int numOfHorizontalPieces, LinkedHashMap<GameSquare, Boolean> validMoves){
         int currentCol = piece.getRelativeY();
@@ -507,41 +528,104 @@ public class GameBoard extends javax.swing.JFrame {
         }
     }
 
-    public static void getValidMovesInDiagonal(GameSquare piece, int numOfDiagonalPieces, LinkedHashMap<GameSquare, Boolean> validMoves){
+    public static void getValidMovesInDiagonal(GameSquare piece, int numOfDiagonalPieces, LinkedHashMap<GameSquare, Boolean> validMoves, String diagonalDirection){
         int currentCol = piece.getRelativeY();
         int currentRow = piece.getRelativeX();
+        Boolean isTopRightSearch    = false;
+        Boolean isBottomRightSearch = false;
+        Boolean isBottomLeftSearch  = false;
+        Boolean isTopLeftSearch     = false; 
+        
+        Boolean isTopLeftToBottomRightSearch    = false;
+        Boolean isBottomLeftToTopRightSearch = false;
+      
+        switch(diagonalDirection){
+            case "topLeftToBottomRight":
+                isTopLeftToBottomRightSearch = true;
+                break;
+            case "bottomLeftToTopRight":
+                isBottomLeftToTopRightSearch = true;
+                break;
+        }
+        
+        if (isTopLeftToBottomRightSearch){
+            isTopLeftSearch     = true;
+            isBottomRightSearch = true;
+        }
+            
+        if (isBottomLeftToTopRightSearch){
+            isTopRightSearch     = true;
+            isBottomLeftSearch   = true;
+        }
 
-        int highBoundedCol = currentCol + numOfDiagonalPieces;
-        int lowBoundedCol  = currentCol - numOfDiagonalPieces;
-        int highBoundedRow = currentRow + numOfDiagonalPieces;
-        int lowBoundedRow  = currentRow - numOfDiagonalPieces;
+        int highBoundedCol = 0; 
+        int lowBoundedCol  = 0;
+        int highBoundedRow = 0;
+        int lowBoundedRow  = 0;
         
-        highBoundedCol = (highBoundedCol > (COLUMNS-1)) ? -1 : highBoundedCol;
-        lowBoundedCol  = (lowBoundedCol < 0)            ? -1 : lowBoundedCol;
+//        highBoundedCol = (highBoundedCol > (COLUMNS-1)) ? -1 : highBoundedCol;
+//        lowBoundedCol  = (lowBoundedCol < 0)            ? -1 : lowBoundedCol;
+//        
+//        highBoundedRow = (highBoundedRow > (ROWS-1)) ? -1 : highBoundedRow;
+//        lowBoundedRow  = (lowBoundedRow < 0)         ? -1 : lowBoundedRow;
         
-        highBoundedRow = (highBoundedRow > (ROWS-1)) ? -1 : highBoundedRow;
-        lowBoundedRow  = (lowBoundedRow < 0)         ? -1 : lowBoundedRow;
+        if(isTopRightSearch || isBottomRightSearch){
+            highBoundedCol = currentCol + numOfDiagonalPieces;
+            highBoundedCol = (highBoundedCol > (COLUMNS-1)) ? -1 : highBoundedCol;
+        }
         
-        Point topLeftMove, topRightMove, bottomRightMove, bottomLeftMove;
-        if ( highBoundedCol != -1 && lowBoundedRow != -1 )
-            topRightMove = new Point(lowBoundedRow, highBoundedCol);
-        else
-            topRightMove = null;
+        if (isBottomRightSearch || isBottomLeftSearch){
+            highBoundedRow = currentRow + numOfDiagonalPieces;
+            highBoundedRow = (highBoundedRow > (ROWS-1)) ? -1 : highBoundedRow;
+        }
         
-        if ( highBoundedCol != -1 && highBoundedRow != -1 )
-            bottomRightMove  = new Point(highBoundedRow, highBoundedCol);
-        else 
-            bottomRightMove = null;
+        if (isTopRightSearch || isTopLeftSearch){
+            lowBoundedRow  = currentRow - numOfDiagonalPieces;
+            lowBoundedRow  = (lowBoundedRow < 0) ? -1 : lowBoundedRow;
+        }
         
-        if ( lowBoundedCol != -1 && lowBoundedRow != -1 )
-            topLeftMove = new Point(lowBoundedRow, lowBoundedCol);
-        else
-            topLeftMove = null;
+        if (isTopLeftSearch || isBottomLeftSearch){
+            lowBoundedCol  = currentCol - numOfDiagonalPieces;
+            lowBoundedCol  = (lowBoundedCol < 0) ? -1 : lowBoundedCol;
+        }
         
-        if ( lowBoundedCol != -1 && highBoundedRow != -1 )
-            bottomLeftMove = new Point(highBoundedRow, lowBoundedCol);
-        else
-            bottomLeftMove = null;
+        Point topLeftMove     = null;
+        Point topRightMove    = null;
+        Point bottomRightMove = null; 
+        Point bottomLeftMove  = null;
+        
+        if (isTopRightSearch){
+            if ( highBoundedCol != -1 && lowBoundedRow != -1 )
+                topRightMove = new Point(lowBoundedRow, highBoundedCol);
+            else
+                topRightMove = null;
+        }
+        
+        if (isBottomRightSearch){
+            currentRow = piece.getRelativeX();  
+            currentCol = piece.getRelativeY();
+            if ( highBoundedCol != -1 && highBoundedRow != -1 )
+                bottomRightMove  = new Point(highBoundedRow, highBoundedCol);
+            else 
+                bottomRightMove = null;
+        }
+        if (isTopLeftSearch){
+            currentRow = piece.getRelativeX();  
+            currentCol = piece.getRelativeY();
+            if ( lowBoundedCol != -1 && lowBoundedRow != -1 )
+                topLeftMove = new Point(lowBoundedRow, lowBoundedCol);
+            else
+                topLeftMove = null;
+        }
+        
+        if (isBottomLeftSearch){
+            currentRow = piece.getRelativeX();  
+            currentCol = piece.getRelativeY();
+            if ( lowBoundedCol != -1 && highBoundedRow != -1 )
+                bottomLeftMove = new Point(highBoundedRow, lowBoundedCol);
+            else
+                bottomLeftMove = null;
+        }
         
         if (playerPieces.containsKey(topRightMove))
             topRightMove = null;
@@ -569,9 +653,6 @@ public class GameBoard extends javax.swing.JFrame {
                 }
             }
             
-            currentCol = piece.getRelativeY();
-            currentRow = piece.getRelativeX();
-            
             // checking if enemies exist on path to bottomRight
             if (bottomRightMove != null){
                 currentRow++;
@@ -590,41 +671,55 @@ public class GameBoard extends javax.swing.JFrame {
             // checking if enemies exist on path to bottomLeft
             if (bottomLeftMove != null){
                 currentRow++;
-                currentCol++;
-                while( (currentCol < highBoundedCol) && (currentRow < highBoundedRow)){
+                currentCol--;
+                while( (currentCol > lowBoundedCol) && (currentRow < highBoundedRow)){
                     Point currentPoint = new Point(currentRow, currentCol);
                     if(isPointAnEnemy(currentPoint, enemyPieces.keySet())){ // cannot jump enemy
                         topRightMove = null;
                         break;
                     }
                     currentRow++;
-                    currentCol++;
+                    currentCol--;
                 }
             }
             
-            currentRow = piece.getRelativeX();
-            currentRow++;
-            while(currentCol < bottomBoundary && (bottomMove != null)){
-                Point currentPoint = new Point(currentRow, currentCol);
-                if(isPointAnEnemy(currentPoint, enemyPieces.keySet())){ // cannot jump enemy
-                    bottomMove = null;
-                    break;
+            // checking if enemies exist on path to topLeft
+            if (topLeftMove != null){
+                currentRow--;
+                currentCol--;
+                while( (currentCol > lowBoundedCol) && (currentRow > lowBoundedRow)){
+                    Point currentPoint = new Point(currentRow, currentCol);
+                    if(isPointAnEnemy(currentPoint, enemyPieces.keySet())){ // cannot jump enemy
+                        topRightMove = null;
+                        break;
+                    }
+                    currentRow--;
+                    currentCol--;
                 }
-                currentRow++;
-            }
+            }     
             
-            if ( (bottomMove == null) && (topMove == null) )
+            if ( (topRightMove==null) && (bottomRightMove==null) && (bottomLeftMove==null) && (topLeftMove==null) )
                 return;
             
             // check if Enemy in location - doesn't really matter at this point... just make sure to check when moving so the GUI can be updated accordingly
-            if (topMove != null){
-                Boolean isEnemyInLoc = (isPointAnEnemy(topMove, enemyPieces.keySet())) ? true : false;
-                validMoves.put(squares.get(topMove), isEnemyInLoc);
+            if (topRightMove != null){
+                Boolean isEnemyInLoc = (isPointAnEnemy(topRightMove, enemyPieces.keySet())) ? true : false;
+                validMoves.put(squares.get(topRightMove), isEnemyInLoc);
             }
                     
-            if (bottomMove != null){
-                Boolean isEnemyInLoc = (isPointAnEnemy(bottomMove, enemyPieces.keySet())) ? true : false;
-                validMoves.put(squares.get(bottomMove), isEnemyInLoc);
+            if (bottomRightMove != null){
+                Boolean isEnemyInLoc = (isPointAnEnemy(bottomRightMove, enemyPieces.keySet())) ? true : false;
+                validMoves.put(squares.get(bottomRightMove), isEnemyInLoc);
+            } 
+            
+            if (bottomLeftMove != null){
+                Boolean isEnemyInLoc = (isPointAnEnemy(bottomLeftMove, enemyPieces.keySet())) ? true : false;
+                validMoves.put(squares.get(bottomLeftMove), isEnemyInLoc);
+            } 
+            
+            if (topLeftMove != null){
+                Boolean isEnemyInLoc = (isPointAnEnemy(topLeftMove, enemyPieces.keySet())) ? true : false;
+                validMoves.put(squares.get(topLeftMove), isEnemyInLoc);
             } 
         }
     }
@@ -633,15 +728,18 @@ public class GameBoard extends javax.swing.JFrame {
         LinkedHashMap<GameSquare, Boolean> validMoves = new LinkedHashMap<>();
         int numHorizontalCheckers = getNumOfHorizontalPieces(currentSquare);
         int numVerticalCheckers   = getNumOfVerticalPieces(currentSquare);
-        int numDiagonalCheckers   = getNumOfDiagonalPieces(currentSquare);
+        int numTopRightDiagonalCheckers      = getNumOfDiagonalPieces(currentSquare, "topLeftToBottomRight");
+        int numBottomRightDiagonalCheckers   = getNumOfDiagonalPieces(currentSquare, "bottomLeftToTopRight");
         
         getValidMovesInHorizontal(currentSquare, numHorizontalCheckers, validMoves);
-//        getValidMovesInCertainDirection(currentSquare, numVerticalCheckers, validMoves, "horizontal");
-//        getValidMovesInCertainDirection(currentSquare, numVerticalCheckers, validMoves, "vertical");
         getValidMovesInVertical(currentSquare,   numVerticalCheckers,   validMoves);
-        //getValidMovesInDiagonal(numDiagonalCheckers, validMoves); 
+        getValidMovesInDiagonal(currentSquare,   numTopRightDiagonalCheckers,    validMoves, "topLeftToBottomRight");
+        getValidMovesInDiagonal(currentSquare,   numBottomRightDiagonalCheckers, validMoves, "bottomLeftToTopRight");
+        
+        System.out.println("--------");
+        System.out.println("List of Valid Moves...");
         for (GameSquare square : validMoves.keySet()){
-            System.out.println("Sqaure Loc: " + square.getRelativeLoc() + " color: " + square.pieceColor());
+           System.out.println("Sqaure Loc: " + square.getRelativeLoc() + " color: " + square.pieceColor());
         }
         return validMoves;
     }
