@@ -503,7 +503,7 @@ public class GameBoard extends javax.swing.JFrame {
             
             currentRow = piece.getRelativeX();
             currentRow++;
-            while(currentCol < bottomBoundary && (bottomMove != null)){
+            while(currentRow < bottomBoundary && (bottomMove != null)){
                 Point currentPoint = new Point(currentRow, currentCol);
                 if(isPointAnEnemy(currentPoint, enemyPieces.keySet())){ // cannot jump enemy
                     bottomMove = null;
