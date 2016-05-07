@@ -14,6 +14,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.JButton;
 
@@ -219,6 +220,8 @@ public class GameBoard extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    static Boolean gameOver   = false;
+    static Boolean isFirstRun = true;
     /**
      * @param args the command line arguments
      */
@@ -247,18 +250,47 @@ public class GameBoard extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 GameBoard gb = new GameBoard();
-//                gb.setChoicesForPlayerColorChoice();
-//                gb.storeAllSquaresInArr();
-//                gb.setActionForAllSquares();
                 gb.setVisible(true);
-//                new GameBoard().setVisible(true);
+                /*
+                while(!gameOver){
+                    if (isFirstRun){
+                        if (playerColor != "Black"){
+                            getMoveUsingAlphaBeta   
+                        }
+                    }
+                    // black moves first
+                    // get white move
+                    // get black move
+                }
+                        */
+                String x = "Hello";
+                String y = "World";
+                LinkedHashMap<String, String> tmp  = new LinkedHashMap();
+                LinkedHashMap<String, String> tmp2 = new LinkedHashMap();
+                tmp.put(x,y);
+                tmp2.put(x, y);
+//                x = x.toLowerCase();
+                
+                tmp.put(x, y.concat("ughh"));
+                
+                for (String t : tmp.keySet()){
+                    System.out.print("tmp1 key: " + t);
+                    for (String q : tmp.values())
+                        System.out.println(" tmp1 value: " + q);
+                }
+                
+                for (String t : tmp2.keySet()){
+                    System.out.print("tmp2 key: " + t);
+                    for (String q : tmp2.values())
+                        System.out.println(" tmp2 value: " + q);
+                }
             }
         });
     }
+    
     
     public void setActionForAllSquares(){
         for (JButton square : squares.values()){
@@ -736,11 +768,11 @@ public class GameBoard extends javax.swing.JFrame {
         getValidMovesInDiagonal(currentSquare,   numTopRightDiagonalCheckers,    validMoves, "topLeftToBottomRight");
         getValidMovesInDiagonal(currentSquare,   numBottomRightDiagonalCheckers, validMoves, "bottomLeftToTopRight");
         
-        System.out.println("--------");
-        System.out.println("List of Valid Moves...");
-        for (GameSquare square : validMoves.keySet()){
-           System.out.println("Sqaure Loc: " + square.getRelativeLoc() + " color: " + square.pieceColor());
-        }
+//        System.out.println("--------");
+//        System.out.println("List of Valid Moves...");
+//        for (GameSquare square : validMoves.keySet()){
+//           System.out.println("Sqaure Loc: " + square.getRelativeLoc() + " color: " + square.pieceColor());
+//        }
         return validMoves;
     }
     
@@ -760,6 +792,10 @@ public class GameBoard extends javax.swing.JFrame {
         setGrayBoxPropertiesFor(oldLoc);
     }
     
+    public static void updateAllSquares(Point pt, GameSquare square){
+        squares.put(pt, square);
+    }
+    
     public static void move(GameSquare oldLoc, GameSquare newLoc){
         // Assumes the movement from old to new locations is valid... will only check to see if the movement is eating another player or not
         
@@ -776,7 +812,113 @@ public class GameBoard extends javax.swing.JFrame {
         
         updateBoxColoring(oldLoc, newLoc);
         
+        updateAllSquares(oldLoc.getRelativeLoc(), oldLoc);
+        updateAllSquares(newLoc.getRelativeLoc(), newLoc);
+        
         // player to empty spot
+    }
+    
+    public static synchronized Boolean checkIfNeighboringPiecesAreSameColor(Point point, LinkedHashMap<Point, Boolean> pieces, int numPiecesExplored){
+        Point left        = new Point ((int) point.getX() , (int) point.getY() - 1);
+        Point right       = new Point ((int) point.getX() , (int) point.getY() + 1);
+        Point top         = new Point ((int) point.getX() - 1 , (int) point.getY());
+        Point bottom      = new Point ((int) point.getX() + 1 , (int) point.getY());
+        Point topLeft     = new Point ((int) point.getX() - 1 , (int) point.getY() - 1);
+        Point topRight    = new Point ((int) point.getX() - 1 , (int) point.getY() + 1);  
+        Point bottomRight = new Point ((int) point.getX() + 1 , (int) point.getY() + 1);  
+        Point bottomLeft  = new Point ((int) point.getX() + 1 , (int) point.getY() - 1); 
+        Boolean isAllTrue = false;
+        
+        for (Point currentPoint : pieces.keySet()){
+            if (!pieces.get(currentPoint).equals(true)){
+                isAllTrue = false;
+                break;
+            }
+            isAllTrue = true;
+        }
+        
+        if (isAllTrue)
+            return true;
+        
+        Boolean neighborIsFriendly = false;
+        numPiecesExplored++;
+        if (pieces.containsKey(left)        || 
+            pieces.containsKey(right)       ||
+            pieces.containsKey(top)         || 
+            pieces.containsKey(bottom)      || 
+            pieces.containsKey(topLeft)     || 
+            pieces.containsKey(topRight)    || 
+            pieces.containsKey(bottomRight) ||
+            pieces.containsKey(bottomLeft)){
+            
+            pieces.put(point, true); // piece has a neighbor of the same color
+            
+        }else
+            return false;
+        
+        if (pieces.containsKey(left) && pieces.get(left).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(left, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(right) && pieces.get(right).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(right, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(top) && pieces.get(top).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(top, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(bottom) && pieces.get(bottom).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(bottom, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(topLeft) && pieces.get(topLeft).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(topLeft, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(topRight) && pieces.get(topRight).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(topRight, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(bottomRight) && pieces.get(bottomRight).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(bottomRight, pieces, numPiecesExplored);
+        
+        if (pieces.containsKey(bottomLeft) && pieces.get(bottomLeft).equals(false))
+            neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(bottomLeft, pieces, numPiecesExplored);
+        
+//        if (numPiecesExplored != pieces.size()) // piece is not attainable from current config
+//            return false;
+        
+        for (Point currentPoint : pieces.keySet()){
+            if (!pieces.get(currentPoint).equals(true)){
+                isAllTrue = false;
+                break;
+            }
+            isAllTrue = true;
+        }
+        
+        if (isAllTrue)
+            return true;
+        
+        return false;
+    }
+    
+    public static void checkForWinningGameState(){
+        // check if playerColor has won
+        LinkedHashMap<Point, Boolean> playerPiecesToExplore = new LinkedHashMap();
+        for (Point point : playerPieces.keySet())
+            playerPiecesToExplore.put(point, false);
+        int timesChecked = 0;
+        
+        Map.Entry<Point, Boolean> entry = playerPiecesToExplore.entrySet().iterator().next();
+        Point point = entry.getKey();
+
+        playerWins = checkIfNeighboringPiecesAreSameColor(point, playerPiecesToExplore, 0);
+        
+        
+        
+        // check if enemy has won
+        LinkedHashMap<Point, Boolean> enemyPiecesToExplore = new LinkedHashMap();
+        for (Point enemyPoint : enemyPieces.keySet())
+            enemyPiecesToExplore.put(enemyPoint, false);
+        
+        entry = enemyPiecesToExplore.entrySet().iterator().next();
+        point = entry.getKey();
+            enemyWins = checkIfNeighboringPiecesAreSameColor(point, enemyPiecesToExplore, 0);
     }
     
     public void setAllInitialRelativeLoc(){
@@ -880,6 +1022,14 @@ public class GameBoard extends javax.swing.JFrame {
         enemyPieces  = (playerColor.equals("White")) ? blackPlayers : whitePlayers;
         enemyColor   = (playerColor.equals("White")) ? "Black" : "White";
     }
+    
+    public static Boolean getPlayerVictoryStatus(){
+        return playerWins;
+    }
+    
+    public static Boolean getEnemyVictoryStatus(){
+        return enemyWins;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private java.awt.Choice choice1;
@@ -919,6 +1069,8 @@ public class GameBoard extends javax.swing.JFrame {
     private static LinkedHashMap<Point, GameSquare> enemyPieces  = new LinkedHashMap();
     private static String playerColor = "White";
     private static String enemyColor  = "Black";
+    private static Boolean enemyWins  = false;
+    private static Boolean playerWins = false;
     
     
     public static final int ROWS = 5;
@@ -939,7 +1091,11 @@ class SquareMovement implements ActionListener {
     
     @Override
     public void actionPerformed(ActionEvent ae){
+        
         GameSquare square = (GameSquare) ae.getSource();
+        GameBoard.checkForWinningGameState();
+        System.out.println("Player wins: " + GameBoard.getPlayerVictoryStatus());
+        System.out.println("Enemy wins: " + GameBoard.getEnemyVictoryStatus());
         
         if(!(square.pieceColor().equals(GameBoard.getPlayerColor())) && firstClick){
             System.out.println("Not your color to move... please try again");
