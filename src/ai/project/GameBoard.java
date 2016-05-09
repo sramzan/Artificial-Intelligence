@@ -383,6 +383,16 @@ public class GameBoard extends javax.swing.JFrame {
             savedPlayerPieces = getDeepCopy(playerPieces);
             savedEnemyPieces  = getDeepCopy(enemyPieces);
             savedGameBoard    = getDeepCopy(squares);
+            playerPiecesBeforeRun = playerPieces;
+            enemyPiecesBeforeRun  = enemyPieces;
+            
+            if (playerColor.equals("White")){
+                whitePlayers = playerPieces;
+                blackPlayers = enemyPieces;
+            }else{
+                whitePlayers = enemyPieces;
+                blackPlayers = playerPieces;
+            }
         }
         catch (Exception e){
             System.out.println("Issue saving current state of board");
@@ -433,11 +443,23 @@ public class GameBoard extends javax.swing.JFrame {
 //        squares      = copiedGameBoard;
 //        playerPieces = copiedPlayerPieces;
 //        enemyPieces  = copiedEnemyPieces;
-        LinkedHashMap<Point, GameSquare> tmpEnemies = enemyPieces;
-        enemyPieces  = playerPieces;
-        playerPieces = tmpEnemies;
-        playerColor  = (intialPlayerColor.equals("White")) ? "White" : "Black";
-        enemyColor   = (intialPlayerColor.equals("White")) ? "Black" : "White";
+//        LinkedHashMap<Point, GameSquare> tmpEnemies = enemyPieces;
+//        enemyPieces  = playerPieces;
+//        playerPieces = tmpEnemies;
+        // making sure everything is setup for the AI run here
+        if (intialPlayerColor.equals("White")){
+            playerColor = "Black";
+            enemyColor  = "White";
+            playerPieces = blackPlayers;
+            enemyPieces  = whitePlayers;
+        }
+        else{
+            playerColor = "White";
+            enemyColor  = "Black";
+            playerPieces = whitePlayers;
+            enemyPieces  = blackPlayers;
+        }
+        
         
         if (entry.getValue() != null){ // takes care of the instance when there may not be any available moves
             GameSquare oldLoc = entry.getValue().get(0);
@@ -446,6 +468,24 @@ public class GameBoard extends javax.swing.JFrame {
             move(oldLoc, newLoc);
             // check what the player and enemy pieces are here
         }
+        
+        //flip back
+        LinkedHashMap<Point, GameSquare> tmpPlayers = new LinkedHashMap();
+        if (intialPlayerColor.equals("White")){
+            playerColor = "White";
+            enemyColor  = "Black";
+        }
+        else{
+            playerColor = "Black";
+            enemyColor  = "White";
+        }
+        tmpPlayers  = enemyPieces; 
+        enemyPieces = playerPieces;
+        playerPieces = tmpPlayers;
+//        playerPieces = playerPiecesBeforeRun;
+//        enemyPieces  = enemyPiecesBeforeRun;
+//        playerColor  = (intialPlayerColor.equals("White")) ? "White" : "Black";
+//        enemyColor   = (intialPlayerColor.equals("White")) ? "Black" : "White";
 //        flipConfigsForAIorPlayer();
 //        return the action in ACTIONS(state) with value v - MAY HAVE TO DO THIS
     }
@@ -1546,6 +1586,8 @@ public class GameBoard extends javax.swing.JFrame {
     private static LinkedHashMap<Point, GameSquare> savedPlayerPieces = new LinkedHashMap();
     private static LinkedHashMap<Point, GameSquare> savedEnemyPieces  = new LinkedHashMap();
     private static LinkedHashMap<Point, GameSquare> savedGameBoard    = new LinkedHashMap();
+    private static LinkedHashMap<Point, GameSquare> playerPiecesBeforeRun = new LinkedHashMap();
+    private static LinkedHashMap<Point, GameSquare> enemyPiecesBeforeRun = new LinkedHashMap();
     private static ArrayList<LinkedHashMap<Point, GameSquare>> changedPieces = new ArrayList();
     private static String playerColor  = "White";
     private static String enemyColor   = "Black";
