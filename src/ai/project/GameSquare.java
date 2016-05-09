@@ -12,7 +12,7 @@ import javax.swing.JButton;
  *
  * @author Sean
  */
-public class GameSquare extends JButton {
+public class GameSquare extends JButton implements Cloneable{
     Point relativeLoc = new Point(0,0);
     private Boolean isPiece = false;
     String pieceColor = "none";
@@ -60,6 +60,10 @@ public class GameSquare extends JButton {
     @Override 
     public int hashCode(){
         return (int) (relativeLoc.getX() + relativeLoc.getY());
+    }
+    
+    public GameSquare clone() throws CloneNotSupportedException {
+        return (GameSquare) super.clone();
     }
 
 }

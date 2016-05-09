@@ -13,7 +13,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.JButton;
@@ -222,6 +225,8 @@ public class GameBoard extends javax.swing.JFrame {
 
     static Boolean gameOver   = false;
     static Boolean isFirstRun = true;
+    public static Boolean playerColorChoiceSet = false;
+    public static Boolean isPlayerTurn = false;
     /**
      * @param args the command line arguments
      */
@@ -252,44 +257,297 @@ public class GameBoard extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
+                //setCorrespondingGameConfigs();
                 GameBoard gb = new GameBoard();
                 gb.setVisible(true);
-                /*
-                while(!gameOver){
-                    if (isFirstRun){
-                        if (playerColor != "Black"){
-                            getMoveUsingAlphaBeta   
-                        }
-                    }
-                    // black moves first
-                    // get white move
-                    // get black move
-                }
-                        */
-                String x = "Hello";
-                String y = "World";
-                LinkedHashMap<String, String> tmp  = new LinkedHashMap();
-                LinkedHashMap<String, String> tmp2 = new LinkedHashMap();
-                tmp.put(x,y);
-                tmp2.put(x, y);
-//                x = x.toLowerCase();
-                
-                tmp.put(x, y.concat("ughh"));
-                
-                for (String t : tmp.keySet()){
-                    System.out.print("tmp1 key: " + t);
-                    for (String q : tmp.values())
-                        System.out.println(" tmp1 value: " + q);
-                }
-                
-                for (String t : tmp2.keySet()){
-                    System.out.print("tmp2 key: " + t);
-                    for (String q : tmp2.values())
-                        System.out.println(" tmp2 value: " + q);
-                }
+//                
+//                
+//                try{
+//                    System.out.println();
+//                    Point x = new Point(0,0);
+//                    GameSquare y = new GameSquare();
+//                    y.setPieceColor("White");
+//                    LinkedHashMap<Point, GameSquare> tmp  = new LinkedHashMap();
+//                    LinkedHashMap<Point, GameSquare> tmp2 = new LinkedHashMap();
+//                    LinkedHashMap<Point, GameSquare> tmp3 = new LinkedHashMap();
+//                    tmp.put(x,y);
+//                    tmp2.put(x, y);
+//                    tmp3 = getDeepCopy(tmp2);
+//    //                x = x.toLowerCase();
+//                    y.setPieceColor("Black");
+//                    for (Point t : tmp.keySet()){
+//                        System.out.print("tmp1 key: " + t);
+//                        for (GameSquare q : tmp.values())
+//                            System.out.println(" tmp1 value: " + q.pieceColor());
+//                    }
+//
+//                    for (Point t : tmp2.keySet()){
+//                        System.out.print("tmp2 key: " + t);
+//                        for (GameSquare q : tmp2.values())
+//                            System.out.println(" tmp2 value: " + q.pieceColor());
+//                    }
+//
+//                    for (Point t : tmp3.keySet()){
+//                        System.out.print("tmp3 key: " + t);
+//                        for (GameSquare q : tmp3.values())
+//                            System.out.println(" tmp3 value: " + q.pieceColor());
+//                    }
+//
+//                    startTime = (float) System.nanoTime();
+//                    /*
+//                    while(!gameOver){
+//                        if (isFirstRun){
+//                            if (playerColor != "Black"){
+//                                getMoveUsingAlphaBeta   
+//                            }
+//                        }
+//                        // black moves first
+//                        // get white move
+//                        // get black move
+//                    }
+//                            */
+//                }
+//                catch (Exception e){}
             }
         });
+        while (!gameOver){
+            try{
+                if(playerColorChoiceSet){
+                   if (isFirstRun){
+                       if (playerColor == "White"){
+                           //AI has to get the first move
+                           moveUsingAlphaBeta();
+                       }else
+                           isPlayerTurn = true;
+
+                       isFirstRun = false;
+                   }
+
+                   if (isPlayerTurn){
+                      // wait
+                   }else{
+                       moveUsingAlphaBeta();
+                       isPlayerTurn = true;
+                   }
+                }
+            }catch(Exception e){
+                System.out.println("Issue in main function " + e);
+            }
+        }
+
     }
+    
+    public static Boolean isCutOffState(){
+       
+        float timeElapsed = (float) ((System.nanoTime() - startTime) / 1E9 );
+        if (timeElapsed>= 5.0f){
+            System.out.println("CUTOFF HIT");
+            return true;
+        }
+        return false;
+    }
+    
+    public static Map<Integer, ArrayList<GameSquare>> Eval(LinkedHashMap<Point, GameSquare> pieces){
+        int numMovesPossible = 8; // setting to max number of moves possible per piece
+        Map<Integer, ArrayList<GameSquare>> returnMove = new HashMap();
+        ArrayList<GameSquare> moveToMake = new ArrayList();
+        for (GameSquare piece : pieces.values()){
+           LinkedHashMap<GameSquare, Boolean> possibleMoves = getListOfPossibleMoves(piece);
+           
+           if (numMovesPossible >= possibleMoves.size()){
+               numMovesPossible = possibleMoves.size();
+               Map.Entry<GameSquare, Boolean> entry = possibleMoves.entrySet().iterator().next(); // extract the move to make
+               moveToMake.add(piece);
+               moveToMake.add(entry.getKey());
+           }
+        }
+        
+        if (moveToMake.size() > 0){
+            returnMove.put(infinity/2, moveToMake);
+        }else
+            returnMove.put(infinity/2, null);
+        
+        return returnMove;
+    }
+    
+    public static void saveCurrentEnv(){
+        try{
+            System.out.println("Saving current env...");
+            copiedPlayerPieces = getDeepCopy(playerPieces);
+            copiedEnemyPieces  = getDeepCopy(enemyPieces);
+            copiedGameBoard    = getDeepCopy(squares);
+        }
+        catch (Exception e){
+            System.out.println("Issue saving current state of board");
+        }
+    }
+    
+    public static void flipConfigsForAIorPlayer(){
+        System.out.println("Setting configs...");
+        playerColor = (playerColor.equals("White")) ? "Black" : "White";
+        enemyColor  = (playerColor.equals("White")) ? "Black" : "White";
+        setCorrespondingGameConfigs();
+    }
+    
+    public static void moveUsingAlphaBeta() throws CloneNotSupportedException{
+//        GameSquare v = new GameSquare();
+//        LinkedHashMap<Point, GameSquare> currentStateOfBoard = squares;
+        String intialPlayerColor = playerColor;
+        System.out.println("Starting Alpha Beta Algo Search...");
+        startTime = System.nanoTime(); // reset startTime to 0 so that the cutoff can occur after 10seconds
+        Map<Integer, ArrayList<GameSquare>> v = new HashMap();
+        flipConfigsForAIorPlayer();
+        saveCurrentEnv();
+        
+        v = MAX_VALUE(copiedPlayerPieces, -infinity, infinity,0); // MAKE SURE TO SET THE PROPER CONFIGS AND SWITCH COLORS AND IT'S THE AI'S TURN
+        Map.Entry<Integer, ArrayList<GameSquare>> entry = v.entrySet().iterator().next();
+        
+        squares      = copiedGameBoard;
+        playerPieces = copiedPlayerPieces;
+        enemyPieces  = copiedEnemyPieces;
+        playerColor  = (intialPlayerColor.equals("White")) ? "White" : "Black";
+        enemyColor   = (intialPlayerColor.equals("White")) ? "Black" : "White";
+        
+        if (entry.getValue() != null){ // takes care of the instance when there may not be any available moves
+            GameSquare oldLoc = entry.getValue().get(0);
+            GameSquare newLoc = entry.getValue().get(1);
+            // may have to reset the state of the board here
+            move(oldLoc, newLoc);
+        }
+//        flipConfigsForAIorPlayer();
+//        return the action in ACTIONS(state) with value v - MAY HAVE TO DO THIS
+    }
+    
+    public static synchronized Map<Integer, ArrayList<GameSquare>> MAX_VALUE(LinkedHashMap<Point, GameSquare> currentPlayerPiecesState, int alpha, int beta, int depth){
+        // if TERMINAL-TEST(state) then return UTILITY(state)
+        System.out.println("MAX_Func starting...");
+        int v = -infinity;
+        ArrayList<GameSquare> defaultMove = new ArrayList();
+        
+        try{
+            System.out.println("MAX_FUNC: Checking for winner");
+            checkForWinningGameState();
+            if (playerWins || enemyWins){
+                System.out.println("Someone won in MAX_FUNC");
+                Map <Integer, ArrayList<GameSquare>> utilityVal = new HashMap();
+                int terminalVal = (playerWins) ? 100 : -100;
+                utilityVal.put(new Integer(terminalVal), null);
+                return utilityVal;
+            }
+
+            //if CUTOFF-TEST(state, depth) then return EVAL(state)- TODO
+            if (isCutOffState()){
+                System.out.println("MAX_FUNC: Before EVAL");
+                return Eval(currentPlayerPiecesState);
+//                System.out.println("MAX_FUNC: After ");
+            }
+//            int v = -infinity;
+    //        for the next a in ACTIONS(state) do
+//            ArrayList<GameSquare> defaultMove = new ArrayList();
+            System.out.println("MAX_FUNC: getting deep copy");
+            LinkedHashMap<Point, GameSquare> intialStateOfPieces = getDeepCopy(currentPlayerPiecesState);
+            for (GameSquare oldLoc : currentPlayerPiecesState.values()){
+                LinkedHashMap<GameSquare, Boolean> possibleMovesForSquare = getListOfPossibleMoves(oldLoc);
+                for (GameSquare newLoc : possibleMovesForSquare.keySet()){
+                    System.out.println("Inside MAX_FUNC Loop");
+                    defaultMove.clear(); // clear default move
+                    playerPieces = getDeepCopy(intialStateOfPieces); // need to reset to the intial passed in value so that every move could be evaluated equally
+    //            v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
+                    moveWithoutUpdatingGUI(oldLoc, newLoc);
+                    flipConfigsForAIorPlayer();
+                    Map<Integer, ArrayList<GameSquare>> resultOfMin = MIN_VALUE(enemyPieces, alpha, beta, depth+1); // get the resulting v value & move to get that value for the min player
+                    Map.Entry<Integer, ArrayList<GameSquare>> entry = resultOfMin.entrySet().iterator().next(); // extract the v value from the pair returned
+                    int returnValOfMIN_VALUE = entry.getKey().intValue();
+                    v = Math.max(v, returnValOfMIN_VALUE); // do the comparison
+                    // should I reset the player, enemy, and all squares before running this again?
+
+
+    //                if v ≥ β then return v
+                    if (v >= beta){
+                        ArrayList<GameSquare> moveToMake = new ArrayList<>(Arrays.asList(oldLoc, newLoc));
+                        Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
+                        pairToReturn.put(v, moveToMake);
+                        return pairToReturn;
+                    }
+    //                α← MAX(α, v)
+                    alpha = Math.max(alpha, v); 
+                    defaultMove.add(oldLoc);
+                    defaultMove.add(newLoc);
+                }
+            }
+        }catch (Exception e){
+            System.out.println("Issue with MAX_FUNC "+ e);
+        }
+        Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
+        pairToReturn.put(v, defaultMove);
+        return pairToReturn;
+    }
+    
+    public static synchronized Map<Integer, ArrayList<GameSquare>> MIN_VALUE(LinkedHashMap<Point, GameSquare> currentEnemyPiecesState, int alpha, int beta, int depth){
+//        if TERMINAL-TEST(state) then return UTILITY(state)
+        System.out.println("MIN_FUNC: starting");
+        int v = infinity;
+        System.out.println("MIN_FUNC: set v");
+        ArrayList<GameSquare> defaultMove = new ArrayList();
+        System.out.println("MIN_FUNC: Set default move array");
+        
+        try{
+            System.out.println("MIN_FUNC: Checking for winner");
+            checkForWinningGameState();
+            if (playerWins || enemyWins){
+                System.out.println("MIN_FUNC: Someone won");
+                Map <Integer, ArrayList<GameSquare>> utilityVal = new HashMap();
+                int terminalVal = (playerWins) ? 100 : -100;
+                utilityVal.put(new Integer(terminalVal), null);
+                return utilityVal;
+            }
+               
+            System.out.println("MIN_FUNC: getting deep copy");
+            LinkedHashMap<Point, GameSquare> intialStateOfPieces = getDeepCopy(currentEnemyPiecesState);
+            for (GameSquare oldLoc : currentEnemyPiecesState.values()){
+                LinkedHashMap<GameSquare, Boolean> possibleMovesForSquare = getListOfPossibleMoves(oldLoc);
+                for (GameSquare newLoc : possibleMovesForSquare.keySet()){
+                    System.out.println("Inside MIN_FUNC Loop");
+                    defaultMove.clear(); // clear default move
+                    enemyPieces = getDeepCopy(intialStateOfPieces);
+    //            v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
+                    moveWithoutUpdatingGUI(oldLoc, newLoc);
+                    flipConfigsForAIorPlayer();
+                    Map<Integer, ArrayList<GameSquare>> resultOfMax = MAX_VALUE(playerPieces, alpha, beta, depth+1); // get the resulting v value & move to get that value for the min player
+                    Map.Entry<Integer, ArrayList<GameSquare>> entry = resultOfMax.entrySet().iterator().next(); // extract the v value from the pair returned
+                    int returnValOfMAX_VALUE = entry.getKey().intValue();
+                    v = Math.min(v, returnValOfMAX_VALUE); // do the comparison
+                    // should I reset the player, enemy, and all squares before running this again?
+
+
+    //                if v ≤ α then return v
+                    if (v <= alpha){
+                        ArrayList<GameSquare> moveToMake = new ArrayList<>(Arrays.asList(oldLoc, newLoc));
+                        Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
+                        pairToReturn.put(v, moveToMake);
+                        return pairToReturn;
+                    }
+    //                α← MAX(α, v)
+                    beta = Math.max(beta, v); 
+                    defaultMove.add(oldLoc);
+                    defaultMove.add(newLoc);
+                }
+            }
+        }catch (Exception e){
+            System.out.println("Issue with MIN_FUNC " + e);
+        }
+        
+        
+        Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
+        pairToReturn.put(v, defaultMove);
+        return pairToReturn;
+        
+    }
+// v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
+// if v ≥ β then return v
+// α← MAX(α, v)
+// return v
+// 
     
     
     public void setActionForAllSquares(){
@@ -783,10 +1041,21 @@ public class GameBoard extends javax.swing.JFrame {
         oldLoc.setBackground(Color.LIGHT_GRAY);
     }
     
+    public static void setGrayPropertiesWithoutUpdatingGUIFor(GameSquare oldLoc){
+        oldLoc.markSquareAsEmpty();
+        oldLoc.setPieceColor("none");
+    }
+    
     public static void updateBoxColoring(GameSquare oldLoc, GameSquare newLoc){
         newLoc.setBackground(oldLoc.getBackground());
         newLoc.setText(oldLoc.getText());
 //        newLoc.setRelativeLoc(oldLoc.getRelativeX(), oldLoc.getRelativeY()); The new loc should retain its own location 
+        newLoc.setPieceColor(oldLoc.pieceColor());
+        newLoc.makeSquarePlayer();
+        setGrayBoxPropertiesFor(oldLoc);
+    }
+    
+    public static void updateBoxColorPropertiesNotGUI(GameSquare oldLoc, GameSquare newLoc){
         newLoc.setPieceColor(oldLoc.pieceColor());
         newLoc.makeSquarePlayer();
         setGrayBoxPropertiesFor(oldLoc);
@@ -800,12 +1069,20 @@ public class GameBoard extends javax.swing.JFrame {
         // Assumes the movement from old to new locations is valid... will only check to see if the movement is eating another player or not
         
         // handle player to enemy loc
-        Boolean playerEatingEnemy = SquareMovement.isEnemy(newLoc);
+//        Boolean playerEatingEnemy = SquareMovement.isEnemy(newLoc);
+//        if (playerEatingEnemy){
+//            int playersEatCount = (oldLoc.pieceColor().equals("White")) ? numPiecesWhiteAte : numPiecesBlackAte;
+//            playersEatCount++;
+//            enemyPieces.remove(newLoc);
+//        }
+        
+        Boolean playerEatingEnemy = enemyPieces.containsKey(newLoc.getRelativeLoc());
         if (playerEatingEnemy){
             int playersEatCount = (oldLoc.pieceColor().equals("White")) ? numPiecesWhiteAte : numPiecesBlackAte;
             playersEatCount++;
-            enemyPieces.remove(newLoc);
+            enemyPieces.remove(newLoc.getRelativeLoc());
         }
+        
         
         playerPieces.remove(oldLoc.getRelativeLoc());
         playerPieces.put(newLoc.getRelativeLoc(), newLoc);
@@ -816,6 +1093,23 @@ public class GameBoard extends javax.swing.JFrame {
         updateAllSquares(newLoc.getRelativeLoc(), newLoc);
         
         // player to empty spot
+    }
+    
+    public static void moveWithoutUpdatingGUI(GameSquare oldLoc, GameSquare newLoc){
+        System.out.println("Moving piece without GUI ");
+        Boolean playerEatingEnemy = enemyPieces.containsKey(newLoc.getRelativeLoc());
+        if (playerEatingEnemy){
+            int playersEatCount = (oldLoc.pieceColor().equals("White")) ? numPiecesWhiteAte : numPiecesBlackAte;
+            playersEatCount++;
+            enemyPieces.remove(newLoc.getRelativeLoc());
+        }
+        
+        playerPieces.remove(oldLoc.getRelativeLoc());
+        playerPieces.put(newLoc.getRelativeLoc(), newLoc);
+        updateBoxColorPropertiesNotGUI(oldLoc, newLoc);
+        updateAllSquares(oldLoc.getRelativeLoc(), oldLoc);
+        updateAllSquares(newLoc.getRelativeLoc(), newLoc);
+        
     }
     
     public static synchronized Boolean checkIfNeighboringPiecesAreSameColor(Point point, LinkedHashMap<Point, Boolean> pieces, int numPiecesExplored){
@@ -899,6 +1193,8 @@ public class GameBoard extends javax.swing.JFrame {
     
     public static void checkForWinningGameState(){
         // check if playerColor has won
+        if (playerPieces.size() <= 0)
+            return;
         LinkedHashMap<Point, Boolean> playerPiecesToExplore = new LinkedHashMap();
         for (Point point : playerPieces.keySet())
             playerPiecesToExplore.put(point, false);
@@ -909,7 +1205,8 @@ public class GameBoard extends javax.swing.JFrame {
 
         playerWins = checkIfNeighboringPiecesAreSameColor(point, playerPiecesToExplore, 0);
         
-        
+        if (enemyPieces.size() <=0 )
+            return;
         
         // check if enemy has won
         LinkedHashMap<Point, Boolean> enemyPiecesToExplore = new LinkedHashMap();
@@ -1030,6 +1327,21 @@ public class GameBoard extends javax.swing.JFrame {
     public static Boolean getEnemyVictoryStatus(){
         return enemyWins;
     }
+    
+    public static LinkedHashMap<Point, GameSquare> getDeepCopy(LinkedHashMap<Point, GameSquare> source) throws CloneNotSupportedException{
+    LinkedHashMap<Point, GameSquare> copy = new LinkedHashMap<Point, GameSquare>();
+    for (Map.Entry<Point, GameSquare> entry : source.entrySet())
+        copy.put(entry.getKey(), entry.getValue().clone());
+    return copy;
+    }
+    
+    public static void playerMoved(){
+        playerMoved = true;
+    }
+    
+    public static void resetPlayer(){
+        playerMoved = false;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private java.awt.Choice choice1;
@@ -1067,16 +1379,22 @@ public class GameBoard extends javax.swing.JFrame {
     private static LinkedHashMap<Point,GameSquare> blackPlayers  = new LinkedHashMap<>();
     private static LinkedHashMap<Point, GameSquare> playerPieces = new LinkedHashMap();
     private static LinkedHashMap<Point, GameSquare> enemyPieces  = new LinkedHashMap();
-    private static String playerColor = "White";
-    private static String enemyColor  = "Black";
-    private static Boolean enemyWins  = false;
-    private static Boolean playerWins = false;
-    
+    private static LinkedHashMap<Point, GameSquare> copiedPlayerPieces = new LinkedHashMap();
+    private static LinkedHashMap<Point, GameSquare> copiedEnemyPieces  = new LinkedHashMap();
+    private static LinkedHashMap<Point, GameSquare> copiedGameBoard    = new LinkedHashMap();
+    private static String playerColor  = "White";
+    private static String enemyColor   = "Black";
+    private static Boolean playerMoved = false;
+    private static Boolean enemyWins   = false;
+    private static Boolean playerWins  = false;
+    private static int maxDepth = 0;
+    private static final int infinity  = 1000;
     
     public static final int ROWS = 5;
     public static final int COLUMNS = 5;
     public static int numPiecesWhiteAte = 0;
     public static int numPiecesBlackAte = 0;
+    public static float startTime = 0;
 }
 
 class SquareMovement implements ActionListener {
@@ -1091,6 +1409,8 @@ class SquareMovement implements ActionListener {
     
     @Override
     public void actionPerformed(ActionEvent ae){
+        if (!GameBoard.playerColorChoiceSet)
+            return;
         
         GameSquare square = (GameSquare) ae.getSource();
         GameBoard.checkForWinningGameState();
@@ -1113,6 +1433,7 @@ class SquareMovement implements ActionListener {
             }else{
                 if (square.equals(previousClickedPiece)){
                     System.out.println("RESETTING CONTROL...");
+                    GameBoard.resetPlayer();
                     firstClick = true;
                     return;
                 }
@@ -1130,6 +1451,7 @@ class SquareMovement implements ActionListener {
         if (validMoves.containsKey(square)){
             System.out.println("Valid Square to move to");   
             GameBoard.move(previousClickedPiece, square);
+            GameBoard.isPlayerTurn = false;
             firstClick = true;
             //move the piece
         }else{
@@ -1155,6 +1477,7 @@ class ChoiceListener implements ItemListener{
         GameBoard.setPlayerColorChoice((String) e.getItem());
         Choice colorChoice = (Choice) e.getSource();
         colorChoice.setEnabled(false);
+        GameBoard.playerColorChoiceSet = true;
         GameBoard.setCorrespondingGameConfigs();
     }
 }
