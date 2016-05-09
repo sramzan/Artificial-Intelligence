@@ -260,54 +260,6 @@ public class GameBoard extends javax.swing.JFrame {
                 //setCorrespondingGameConfigs();
                 GameBoard gb = new GameBoard();
                 gb.setVisible(true);
-//                
-//                
-//                try{
-//                    System.out.println();
-//                    Point x = new Point(0,0);
-//                    GameSquare y = new GameSquare();
-//                    y.setPieceColor("White");
-//                    LinkedHashMap<Point, GameSquare> tmp  = new LinkedHashMap();
-//                    LinkedHashMap<Point, GameSquare> tmp2 = new LinkedHashMap();
-//                    LinkedHashMap<Point, GameSquare> tmp3 = new LinkedHashMap();
-//                    tmp.put(x,y);
-//                    tmp2.put(x, y);
-//                    tmp3 = getDeepCopy(tmp2);
-//    //                x = x.toLowerCase();
-//                    y.setPieceColor("Black");
-//                    for (Point t : tmp.keySet()){
-//                        System.out.print("tmp1 key: " + t);
-//                        for (GameSquare q : tmp.values())
-//                            System.out.println(" tmp1 value: " + q.pieceColor());
-//                    }
-//
-//                    for (Point t : tmp2.keySet()){
-//                        System.out.print("tmp2 key: " + t);
-//                        for (GameSquare q : tmp2.values())
-//                            System.out.println(" tmp2 value: " + q.pieceColor());
-//                    }
-//
-//                    for (Point t : tmp3.keySet()){
-//                        System.out.print("tmp3 key: " + t);
-//                        for (GameSquare q : tmp3.values())
-//                            System.out.println(" tmp3 value: " + q.pieceColor());
-//                    }
-//
-//                    startTime = (float) System.nanoTime();
-//                    /*
-//                    while(!gameOver){
-//                        if (isFirstRun){
-//                            if (playerColor != "Black"){
-//                                getMoveUsingAlphaBeta   
-//                            }
-//                        }
-//                        // black moves first
-//                        // get white move
-//                        // get black move
-//                    }
-//                            */
-//                }
-//                catch (Exception e){}
             }
         });
         while (!gameOver){
@@ -344,7 +296,7 @@ public class GameBoard extends javax.swing.JFrame {
             return true;
         float timeElapsed = (float) ((System.nanoTime() - startTime) / 1E9 );
         if (timeElapsed>= 10.0f){
-            System.out.println("CUTOFF HIT");
+//            System.out.println("CUTOFF HIT");
             return true;
         }
         return false;
@@ -466,6 +418,7 @@ public class GameBoard extends javax.swing.JFrame {
             GameSquare newLoc = entry.getValue().get(1);
             // may have to reset the state of the board here
             move(oldLoc, newLoc);
+            System.out.println("Move " + oldLoc.pieceColor() + " piece at " + oldLoc.getRelativeLoc() + " to new location at " + newLoc.getRelativeLoc());
             // check what the player and enemy pieces are here
         }
         
@@ -492,7 +445,7 @@ public class GameBoard extends javax.swing.JFrame {
     
     public static synchronized Map<Integer, ArrayList<GameSquare>> MAX_VALUE(LinkedHashMap<Point, GameSquare> currentPlayerPiecesState, LinkedHashMap<Point, GameSquare> currentEnemyPiecesState, LinkedHashMap<Point, GameSquare> currentBoardSquareLayout, int alpha, int beta, int depth){
         // if TERMINAL-TEST(state) then return UTILITY(state)
-        System.out.println("MAX_Func starting...");
+//        System.out.println("MAX_Func starting...");
         int v = -infinity;
         ArrayList<GameSquare> defaultMove = new ArrayList();
         
@@ -509,10 +462,10 @@ public class GameBoard extends javax.swing.JFrame {
 //            playerPieces = getDeepCopy(intialStateOfPieces); // need to reset to the intial passed in value so that every move could be evaluated equally
 //            enemyPieces  = getDeepCopy(intialStateOfEnemyPieces);
 //            
-            System.out.println("MAX_FUNC: Checking for winner");
+//            System.out.println("MAX_FUNC: Checking for winner");
             checkForWinningGameState(copiedPlayerPieces, copiedEnemyPieces);
             if (playerWins || enemyWins){
-                System.out.println("Someone won in MAX_FUNC");
+//                System.out.println("Someone won in MAX_FUNC");
                 Map <Integer, ArrayList<GameSquare>> utilityVal = new HashMap();
                 int terminalVal = (playerWins) ? 100 : -100;
                 utilityVal.put(new Integer(terminalVal), null);
@@ -520,12 +473,12 @@ public class GameBoard extends javax.swing.JFrame {
             }
 
             if (isCutOffState(depth)){
-                System.out.println("MAX_FUNC: Before EVAL");
+//                System.out.println("MAX_FUNC: Before EVAL");
                 return Eval(copiedPlayerPieces, copiedEnemyPieces, copiedSquares);
 
             }
 
-            System.out.println("MAX_FUNC: getting deep copy");
+//            System.out.println("MAX_FUNC: getting deep copy");
 
             
             for (Map.Entry<Point,GameSquare> intialEntry : currentPlayerPiecesState.entrySet()){
@@ -534,7 +487,7 @@ public class GameBoard extends javax.swing.JFrame {
                 
                 for (GameSquare newLoc : possibleMovesForSquare.keySet()){
                     GameSquare newLocUntouched = newLoc.clone();
-                    System.out.println("Inside MAX_FUNC Loop");
+//                    System.out.println("Inside MAX_FUNC Loop");
                     defaultMove.clear(); // clear default move
                     oldLoc = intialEntry.getValue().clone();
                     copiedPlayerPieces = getDeepCopy(intialStateOfPieces); // need to reset to the intial passed in value so that every move could be evaluated equally
