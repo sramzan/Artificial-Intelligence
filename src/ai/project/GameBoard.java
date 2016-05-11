@@ -327,6 +327,7 @@ public class GameBoard extends javax.swing.JFrame {
         */
 //        enemyPieces  = getDeepCopy(enemies);
 //        playerPieces = getDeepCopy(pieces);
+        totalEvalCalls = totalEvalCalls + 1;
         int numMovesPossible = 8; // setting to max number of moves possible per piece
         Map<Integer, ArrayList<GameSquare>> returnMove = new HashMap(); // the return map of the eval function
         ArrayList<GameSquare> moveToMake = new ArrayList(); // will hold the move to make based on the logic below
@@ -428,6 +429,11 @@ public class GameBoard extends javax.swing.JFrame {
         
 //        GameSquare v = new GameSquare();
 //        LinkedHashMap<Point, GameSquare> currentStateOfBoard = squares;
+        maxDepth = 0; // reset max depth 
+        totalNodes = 0; // reset total nodes
+        totalEvalCalls = 0; // reset total evals
+        totalMINPrunes = 0; // reset total max prunes
+        totalMAXPrunes = 0; // reset total min prunes
         String intialPlayerColor = playerColor; // Preserves the color of the user (it will be switched so the AI's perspective is given to the game)
         System.out.println("Starting Alpha Beta Algo Search...");
         startTime = System.nanoTime(); // reset startTime to the current time so that the cutoff can occur after 10seconds
@@ -440,7 +446,11 @@ public class GameBoard extends javax.swing.JFrame {
         v = MAX_VALUE(savedPlayerPieces, savedEnemyPieces, savedGameBoard, -infinity, infinity,0); // The intial start of the Alpha Beta Algorithm's recursive calls 
         Map.Entry<Integer, ArrayList<GameSquare>> entry = v.entrySet().iterator().next(); // get the entry of the what was returned
         // *** It is worth noting that the move for the returned v value is included as the value in this key,value pair. As such, we just need to move according to what the value says
-        
+        System.out.println("Max Depth: " + maxDepth);
+        System.out.println("Total Nodes Generated: " + totalNodes);
+        System.out.println("Total Eval() calls: " + totalEvalCalls);
+        System.out.println("Total MAX Prunes: " + totalMAXPrunes);
+        System.out.println("Total MIN Prunes: " + totalMINPrunes);
 //        squares      = copiedGameBoard;
 //        playerPieces = copiedPlayerPieces;
 //        enemyPieces  = copiedEnemyPieces;
@@ -468,7 +478,7 @@ public class GameBoard extends javax.swing.JFrame {
             GameSquare oldLoc = entry.getValue().get(0); // The piece being moved (the old location)
             GameSquare newLoc = entry.getValue().get(1); // The destination of where the piece is to be moved to (the new location)
             move(oldLoc, newLoc); // Move the piece, and update the GUI
-            System.out.println("Move " + oldLoc.pieceColor() + " piece at " + oldLoc.getRelativeLoc() + " to new location at " + newLoc.getRelativeLoc());
+            System.out.println("Move piece at " + oldLoc.getRelativeLoc() + " to new location at " + newLoc.getRelativeLoc());
             // check what the player and enemy pieces are here
         }
         
@@ -530,6 +540,10 @@ public class GameBoard extends javax.swing.JFrame {
         int v = -infinity;
         ArrayList<GameSquare> defaultMove = new ArrayList();
         
+        if (depth > maxDepth) // updating the deepest depth for reporting sake
+            maxDepth = depth;
+        totalNodes = totalNodes + 1;
+        
         try{
             // Need to copy and preserve the layout of the board, the enemy & player pieces for each run of the function
             // This will ensure that each recursive call receives the correct state of the board, will all configs properly set AND that the intial call has an env that is not touched
@@ -568,6 +582,7 @@ public class GameBoard extends javax.swing.JFrame {
                 
                 // for every valid move in the list of valid moves for the current piece in question
                 for (GameSquare newLoc : possibleMovesForSquare.keySet()){
+                    totalNodes++; // increment the nodes generated everytime an action is done
                     GameSquare newLocUntouched = newLoc.clone(); // saves the untouched new location
                     defaultMove.clear(); // clear default move
                     oldLoc = intialEntry.getValue().clone(); // saves the the untouched old location
@@ -593,16 +608,21 @@ public class GameBoard extends javax.swing.JFrame {
                     copiedPlayerPieces = changedPieces.get(0);
                     copiedEnemyPieces  = changedPieces.get(1);
                     
-                    Map.Entry<Integer, ArrayList<GameSquare>> entry = resultOfMin.entrySet().iterator().next(); // extract the v value from the pair returned
-                    int returnValOfMIN_VALUE = entry.getKey().intValue();
+                    // get the entry from the MIN call
+                    Map.Entry<Integer, ArrayList<GameSquare>> entry = resultOfMin.entrySet().iterator().next(); // extract the value to be compared with v
+                    int returnValOfMIN_VALUE = entry.getKey().intValue(); // extract the value to be compared with v
+                    
                     // v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
                     v = Math.max(v, returnValOfMIN_VALUE); // do the comparison
-                    // should I reset the player, enemy, and all squares before running this again?
-
+                    
+                    // ensure the oldLoc (piece to move) and the newLoc (lcoation to be moved to) are the correct ones
                     oldLoc = intialEntry.getValue().clone();
                     newLoc = newLocUntouched;
+                    
     //                if v ≥ β then return v
                     if (v >= beta){
+                        // if so, return the v val and the corresponding move (as detailed above)
+                        totalMAXPrunes = totalMAXPrunes+1;
                         ArrayList<GameSquare> moveToMake = new ArrayList<>(Arrays.asList(oldLoc, newLoc));
                         Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
                         pairToReturn.put(v, moveToMake);
@@ -611,11 +631,12 @@ public class GameBoard extends javax.swing.JFrame {
                     
     //                α← MAX(α, v)
                     alpha = Math.max(alpha, v); 
+                    // store the corresponding move in case the loop ends and needs to be returned
                     defaultMove.add(oldLoc);
                     defaultMove.add(newLoc);
                 }
             }
-        }catch (Exception e){
+        }catch (Exception e){ // catches any errors with the MAX call
             System.out.println("***************************************");
             System.out.println("ERROR in MAX_FUNC");
             System.out.println("Issue:  "+ e);
@@ -627,20 +648,42 @@ public class GameBoard extends javax.swing.JFrame {
             System.out.println("depth: " + depth);
             System.out.println("***************************************");
         }
+        // return the corresponding v value & move to be made
         Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
         pairToReturn.put(v, defaultMove);
         return pairToReturn;
     }
     
     public static synchronized Map<Integer, ArrayList<GameSquare>> MIN_VALUE(LinkedHashMap<Point, GameSquare> currentPiecesState, LinkedHashMap<Point, GameSquare> currentEnemyPiecesState, LinkedHashMap<Point, GameSquare> currentBoardSquareLayout, int alpha, int beta, int depth){
-//        if TERMINAL-TEST(state) then return UTILITY(state)
-//        System.out.println("MIN_FUNC: starting");
-        int v = infinity;
-//        System.out.println("MIN_FUNC: set v");
-        ArrayList<GameSquare> defaultMove = new ArrayList();
-//        System.out.println("MIN_FUNC: Set default move array");
+        /*
+         - @param1 : current pieces for the player (the player is the user as this is from the users's perspective, and the user is the MIN player)
+         - @param2 : current enemy pieces (the enemy is the AI as this is from the user's perspective, and the AI is the MAX player)
+         - @param3 : current layout of the board (same from the perspective of the AI & user)
+         - @param4 : alpha value (initally set to infinity)
+         - @param5 : beta value (intially set to -infinity)
+         - @param6 : current depth (initially 0)
         
+         - @return : Map< v, ArrayList<pieceToBeMoved, destinationForThePieceToBeMoved>
+        
+        - This the MIN function, and has the behavior of the MIN function studied in class
+            - The only difference is that the return type is different in order to accomodate the code setup
+            - A v value is still returned, and analyzed
+                - It is the key value of the mapping returned
+            - The value associated with the key is the move to be made
+        */
+
+        // setting the v value here due to code strucutre demands, but is stil used int the traditional Alpha Beta manner 
+        int v = infinity;
+        ArrayList<GameSquare> defaultMove = new ArrayList();
+        
+        if (depth > maxDepth) // updating the deepest depth for reporting sake
+            maxDepth = depth;
+        totalNodes = totalNodes + 1;
+         
         try{
+            // Need to copy and preserve the layout of the board, the enemy & player pieces for each run of the function
+            // This will ensure that each recursive call receives the correct state of the board, will all configs properly set AND that the intial call has an env that is not touched
+                // This is to say that when the Alpha Beta algorithm decides on the move to make, it will be made under the correct coditions
             
             LinkedHashMap<Point, GameSquare> intialStateOfPieces      = getDeepCopy(currentPiecesState);
             LinkedHashMap<Point, GameSquare> intialStateOfEnemyPieces = getDeepCopy(currentEnemyPiecesState);
@@ -651,42 +694,47 @@ public class GameBoard extends javax.swing.JFrame {
             LinkedHashMap<Point, GameSquare> copiedSquares            = getDeepCopy(intialStateOfSquares);
 //            playerPieces = getDeepCopy(intialStateOfPieces); // need to reset to the intial passed in value so that every move could be evaluated equally
 //            enemyPieces  = getDeepCopy(intialStateOfEnemyPieces);
-//            System.out.println("MIN_FUNC: Checking for winner");
+
+            //        if TERMINAL-TEST(state) then return UTILITY(state)
             checkForWinningGameState(copiedPlayerPieces, copiedEnemyPieces);
-            if (playerWins || enemyWins){
-//                System.out.println("MIN_FUNC: Someone won");
+            if (playerWins || enemyWins){ // This is essentially the terminal test... a terminal node is defined as a winning or losing state. Utility Value : 100 for win, -100 for loss
                 Map <Integer, ArrayList<GameSquare>> utilityVal = new HashMap();
-                int terminalVal = (playerWins) ? -100 : 100; // the player in this case is the enemy
+                int terminalVal = (playerWins) ? -100 : 100; // the 'player' here is the user, and we should return a -100 for a player win to correspond to the Alpha Beta Logic
                 utilityVal.put(new Integer(terminalVal), null);
                 return utilityVal;
             }
                
-//            System.out.println("MIN_FUNC: getting deep copy");
-
+            // for every piece in the players current pieces
             for (Map.Entry<Point,GameSquare> intialEntry : currentPiecesState.entrySet()){
                 GameSquare oldLoc = intialEntry.getValue().clone();
-                LinkedHashMap<GameSquare, Boolean> possibleMovesForSquare = getListOfPossibleMoves(oldLoc, copiedPlayerPieces, copiedEnemyPieces, copiedSquares);
+                
+                // for every valid move in the list of valid moves for the current piece in question
+                LinkedHashMap<GameSquare, Boolean> possibleMovesForSquare = getListOfPossibleMoves(oldLoc, copiedPlayerPieces, copiedEnemyPieces, copiedSquares); // get list of possible moves
                 for (GameSquare newLoc : possibleMovesForSquare.keySet()){
-                    GameSquare newLocUntouched = newLoc.clone();
+                    totalNodes++; // increment the nodes generated everytime an action is done
+                    GameSquare newLocUntouched = newLoc.clone(); // saves the untouched new location
 //                    System.out.println("Inside MIN_FUNC Loop");
                     defaultMove.clear(); // clear default move
-                    oldLoc = intialEntry.getValue().clone();
-                    copiedPlayerPieces = getDeepCopy(intialStateOfPieces);
-                    copiedEnemyPieces  = getDeepCopy(intialStateOfEnemyPieces);
-                    copiedSquares      = getDeepCopy(intialStateOfSquares);
-    //            v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
+                    oldLoc = intialEntry.getValue().clone(); // saves the the untouched old location
+                    copiedPlayerPieces = getDeepCopy(intialStateOfPieces); // need to reset to the intial passed in pieces so that every move could be evaluated equally
+                    copiedEnemyPieces  = getDeepCopy(intialStateOfEnemyPieces); // need to reset to the intial passed in enemies so that every move could be evaluated equally
+                    copiedSquares      = getDeepCopy(intialStateOfSquares); // need to reset to the intial passed in state of board so that every move could be evaluated equally
                     
+                    // v ← MAX(v, MIN-VALUE(RESULT(state, a), α, β, depth+1))
+                    // moves the pieces according to the valid move WITHOUT updating the GUIT
                     moveWithoutUpdatingGUI(oldLoc, newLoc, copiedPlayerPieces, copiedEnemyPieces, copiedSquares);
-                    copiedPlayerPieces = changedPieces.get(0);
-                    copiedEnemyPieces  = changedPieces.get(1);
-                    copiedSquares      = changedPieces.get(2);
+                    copiedPlayerPieces = changedPieces.get(0); // update the player list based on any changes in the move
+                    copiedEnemyPieces  = changedPieces.get(1); // update the enemy list based on any changes in the move
+                    copiedSquares      = changedPieces.get(2); // update the state of the board based on any changes in the move
                     
+                    // just as in the intial call, flip the perspective from the user as the player to the AI as the player to do the MAX call
                     flipConfigsForAIorPlayer(copiedPlayerPieces, copiedEnemyPieces);
                     copiedPlayerPieces = changedPieces.get(0);
                     copiedEnemyPieces  = changedPieces.get(1);
                     
                     Map<Integer, ArrayList<GameSquare>> resultOfMax = MAX_VALUE(copiedPlayerPieces, copiedEnemyPieces, copiedSquares, alpha, beta, depth+1); // get the resulting v value & move to get that value for the min player
                     
+                    // just as in the intial call, flip the perspective from AI as the player, to the user as the player, to finish the current MIN call
                     flipConfigsForAIorPlayer(copiedPlayerPieces, copiedEnemyPieces);
                     copiedPlayerPieces = changedPieces.get(0);
                     copiedEnemyPieces  = changedPieces.get(1);
@@ -695,24 +743,27 @@ public class GameBoard extends javax.swing.JFrame {
                     int returnValOfMAX_VALUE = entry.getKey().intValue();
                     
                     v = Math.min(v, returnValOfMAX_VALUE); // do the comparison
-                    // should I reset the player, enemy, and all squares before running this again?
-
+                    
+                    // ensure the oldLoc (piece to move) and the newLoc (lcoation to be moved to) are the correct ones
                     oldLoc = intialEntry.getValue().clone();
                     newLoc = newLocUntouched;
     //                if v ≤ α then return v
                     if (v <= alpha){
+                        // if so, return the v val and the corresponding move (as detailed above)
+                        totalMINPrunes = totalMINPrunes+1;
                         ArrayList<GameSquare> moveToMake = new ArrayList<>(Arrays.asList(oldLoc, newLoc));
                         Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
                         pairToReturn.put(v, moveToMake);
                         return pairToReturn;
                     }
     //                α← MAX(α, v)
+                    // store the corresponding move in case the loop ends and needs to be returned
                     beta = Math.min(beta, v); 
                     defaultMove.add(oldLoc);
                     defaultMove.add(newLoc);
                 }
             }
-        }catch (Exception e){
+        }catch (Exception e){ // catches any erros in the MIN call
             System.out.println("***************************************");
             System.out.println("ERROR in MIN_FUNC");
             System.out.println("Issue:  "+ e);
@@ -723,7 +774,7 @@ public class GameBoard extends javax.swing.JFrame {
             System.out.println("***************************************");
         }
         
-        
+        // return the corresponding v value & move to be made
         Map <Integer, ArrayList<GameSquare>> pairToReturn = new HashMap();
         pairToReturn.put(v, defaultMove);
         return pairToReturn;
@@ -737,29 +788,42 @@ public class GameBoard extends javax.swing.JFrame {
     
     
     public void setActionForAllSquares(){
+        // sets the action listener for all of the squares during creating of the board
         for (JButton square : squares.values()){
-            square.addActionListener(new SquareMovement());
+            square.addActionListener(new SquareMovement()); // custom listener defined below
         }
     }
     
     public void setChoicesForPlayerColorChoice(){
+        // sets up the menu for the user to choose his/her color
         playerColorChoice.addItem("White");
         playerColorChoice.addItem("Black");
         playerColorChoice.addItemListener(new ChoiceListener());
     }
     
     public static void setPlayerColorChoice(String color){
+        // sets the color the user chose in the beginning of the game
         playerColor = color;
     }
     
     public static String getPlayerColor(){
+        // returns the current color of the 'player' (depends on the perspective... either from AI or user)
         return playerColor;
     }
     
     public static Boolean isPointAnEnemy(Point point, Set points){
+        // checks to see if the passed in point is an enemy
         return points.contains(point);
     }
     public static int incrementIfPointIsPiece(Point currentPoint, int numOfPieces, LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : point in question
+         - @param2 : numOfPieces in a certain direction so far
+         - @param3 : map of piece list to check
+         - @return : incremented or original value of pieces found
+         - Used for calculating the number of pieces in a certain direciton
+         - Will increment the numOfPieces if the point passed in exists in the pieces map passed in
+        */
         if (copiedSquares.containsKey(currentPoint)){
             if (copiedSquares.get(currentPoint).isPiece())
                 numOfPieces++;
@@ -768,7 +832,15 @@ public class GameBoard extends javax.swing.JFrame {
     }
     
     public static int getNumOfHorizontalPieces(GameSquare currentSquare, LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : currentSquare to be moved
+         - @param2 : current state of the board
+         - @return : total number of horizontal pieces
         
+         - This function will get the total number of pieces in the horizontal direction
+        */
+        
+        // gets current relative location of the square
         int currentCol = currentSquare.getRelativeY();
         int currentRow = currentSquare.getRelativeX();
         int numOfPiecesInHorizontal = 0;
@@ -788,11 +860,21 @@ public class GameBoard extends javax.swing.JFrame {
             numOfPiecesInHorizontal = incrementIfPointIsPiece(currentPoint, numOfPiecesInHorizontal, copiedSquares);
         }
         
+        // total number of pieces in horizontal to be returned
         return numOfPiecesInHorizontal;
         
     }
     
     public static int getNumOfVerticalPieces(GameSquare currentSquare, LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : currentSquare to be moved
+         - @param2 : current state of the board
+         - @return : total number of vertical pieces
+        
+         - This function will get the total number of pieces in the vertical direction
+        */
+        
+        // gets current realtive location of the square
         int currentCol = currentSquare.getRelativeY();
         int currentRow = currentSquare.getRelativeX();
         int numOfVerticalPieces = 0;
@@ -812,16 +894,28 @@ public class GameBoard extends javax.swing.JFrame {
             numOfVerticalPieces = incrementIfPointIsPiece(currentPoint, numOfVerticalPieces, copiedSquares);
         }
         
+        // total number of pieces in vertical to be returned
         return numOfVerticalPieces;
     }
     
-    public static int getNumOfDiagonalPieces(GameSquare currentSquare, String diagonalDirection, LinkedHashMap<Point, GameSquare> copiedSquares){
+    public static int getNumOfDiagonalPieces(GameSquare currentSquare, String diagonalDirection, LinkedHashMap<Point, GameSquare> copiedSquares){ 
+        /*
+         - @param1 : currentSquare to be moved
+         - @param2 : the diagonal direction to search in 
+         - @param3 : current state of the board
+         - @return : total number of diagonal pieces
+        
+         - This function will get the total number of pieces in the specific diagonal direction
+        */
+        
+        // gets current realtive location of the square
         int currentCol = currentSquare.getRelativeY();
         int currentRow = currentSquare.getRelativeX();
         int numOfDiagonalPieces = 0;
         Boolean isTopLeftToBottomRightSearch = false;
         Boolean isBottomLeftToTopRightSearch = false;
       
+        // determines which diagonal direction to search
         switch(diagonalDirection){
             case "topLeftToBottomRight":
                 isTopLeftToBottomRightSearch = true;
@@ -831,6 +925,7 @@ public class GameBoard extends javax.swing.JFrame {
                 break;
         }
         
+        // num pieces checked in the direction from the top left to the bottom right incrementing/decrementing the col/rows necessary
         if (isTopLeftToBottomRightSearch){
             while (currentRow < ROWS && currentCol < COLUMNS){
                 Point currentPoint = new Point(currentRow, currentCol);
@@ -849,6 +944,7 @@ public class GameBoard extends javax.swing.JFrame {
             }
         }
         
+        // num pieces checked in the direction from the bottom left to the top right incrementing/decrementing the col/rows necessary
         if (isBottomLeftToTopRightSearch){
             currentRow = currentSquare.getRelativeX();  
             currentCol = currentSquare.getRelativeY();
@@ -868,24 +964,37 @@ public class GameBoard extends javax.swing.JFrame {
                 numOfDiagonalPieces = incrementIfPointIsPiece(currentPoint, numOfDiagonalPieces, copiedSquares); 
             }
         }
+        // return the total number of diagonal pieces
         return numOfDiagonalPieces;
     }
     
-    // TODO - think about switching the check num of pieces in diff directions to simply looping through the players arrayList
+    
     public static void getValidMovesInHorizontal(GameSquare piece, int numOfHorizontalPieces, LinkedHashMap<GameSquare, Boolean> validMoves,
                                                  LinkedHashMap<Point, GameSquare> copiedPlayers,
                                                  LinkedHashMap<Point, GameSquare> copiedEnemies,
                                                  LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : the piece in question
+         - @param2 : the number of horizontal pieces
+         - @param3 : list of valid moves so far
+         - @param4 : player pieces
+         - @param5 : enemy pieces
+         - @param6 : current state of the board
+        
+         - This function will aggregate all of the valid moves in the horizontal direction
+            - To do so, it will check points along the horizontal path that would be allowed by the number of horizontal pieces passed in 
+        */
+        
+        // calcualte possible moves
         int currentCol = piece.getRelativeY();
         int currentRow = piece.getRelativeX();
-//        if(playerColor.equals("White"))
-//                System.out.println("Color is: " + playerColor);
-        // check if friendly in location - BAD
+
         int rightBoundary = currentCol + numOfHorizontalPieces;
         int leftBoundary  = currentCol - numOfHorizontalPieces;
         rightBoundary = (rightBoundary > (COLUMNS-1)) ? -1 : rightBoundary;
         leftBoundary  = (leftBoundary < 0) ? -1 : leftBoundary;
         
+        // only create a left or right move if it is within the board limits
         Point rightMove, leftMove;
         if (rightBoundary != -1)
             rightMove = new Point(currentRow, rightBoundary);
@@ -897,13 +1006,15 @@ public class GameBoard extends javax.swing.JFrame {
         else 
             leftMove = null;
         
+        // check if player pieces have the point... if so get rid of it
+        // check if friendly in location - BAD, don't add to list of valid moves
         if (copiedPlayers.containsKey(rightMove))
             rightMove = null;
         if (copiedPlayers.containsKey(leftMove))
             leftMove = null;
         
         if (!((rightMove==null) && (leftMove==null)) ){ // checking to see if they 
-            // check if enemies in the way to the location - BAD
+            // check if enemies in the way to the location - BAD, don't add to list of valid moves
             currentCol--; 
             while(currentCol > leftBoundary && (leftMove != null)){
                 Point currentPoint = new Point(currentRow, currentCol);
@@ -928,7 +1039,7 @@ public class GameBoard extends javax.swing.JFrame {
             if ( (rightMove == null) && (leftMove == null) )
                 return;
             
-            // check if Enemy in location - doesn't really matter at this point... just make sure to check when moving so the GUI can be updated accordingly
+            // check if Enemy in location - if so, add true to the list of valid moves, so the move function can takethe necessary actions
             if (leftMove != null){
                 Boolean isEnemyInLoc = (isPointAnEnemy(leftMove, copiedEnemies.keySet())) ? true : false;
                 validMoves.put(copiedSquares.get(leftMove), isEnemyInLoc);
@@ -947,14 +1058,26 @@ public class GameBoard extends javax.swing.JFrame {
                                                LinkedHashMap<Point, GameSquare> copiedSquares){
         int currentCol = piece.getRelativeY();
         int currentRow = piece.getRelativeX();
-//        if(playerColor.equals("White"))
-//                System.out.println("Color is: " + playerColor);
-        // check if friendly in location - BAD
+
+        /*
+         - @param1 : the piece in question
+         - @param2 : the number of vertical pieces
+         - @param3 : list of valid moves so far
+         - @param4 : player pieces
+         - @param5 : enemy pieces
+         - @param6 : current state of the board
+        
+         - This function will aggregate all of the valid moves in the vertical direction
+            - To do so, it will check points along the horizontal path that would be allowed by the number of vertical pieces passed in 
+        */
+        
+        // calcualte possible moves
         int bottomBoundary = currentRow + numOfVerticalPieces;
         int topBoundary    = currentRow - numOfVerticalPieces;
         bottomBoundary = (bottomBoundary > (ROWS-1)) ? -1 : bottomBoundary;
         topBoundary  = (topBoundary < 0) ? -1 : topBoundary;
         
+        // only create a up or down move if it is within the board limits
         Point topMove, bottomMove;
         if (topBoundary != -1)
             topMove = new Point(topBoundary, currentCol);
@@ -966,6 +1089,8 @@ public class GameBoard extends javax.swing.JFrame {
         else 
             bottomMove = null;
         
+        // check if player pieces have the point... if so get rid of it
+        // check if friendly in location - BAD, don't add to list of valid moves
         if (copiedPlayers.containsKey(topMove))
             topMove = null;
         if (copiedPlayers.containsKey(bottomMove))
@@ -997,7 +1122,7 @@ public class GameBoard extends javax.swing.JFrame {
             if ( (bottomMove == null) && (topMove == null) )
                 return;
             
-            // check if Enemy in location - doesn't really matter at this point... just make sure to check when moving so the GUI can be updated accordingly
+            // check if Enemy in location - if so, add true to the list of valid moves, so the move function can takethe necessary actions
             if (topMove != null){
                 Boolean isEnemyInLoc = (isPointAnEnemy(topMove, copiedEnemies.keySet())) ? true : false;
                 validMoves.put(copiedSquares.get(topMove), isEnemyInLoc);
@@ -1014,6 +1139,19 @@ public class GameBoard extends javax.swing.JFrame {
                                                 LinkedHashMap<Point, GameSquare> copiedPlayers,
                                                 LinkedHashMap<Point, GameSquare> copiedEnemies,
                                                 LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : the piece in question
+         - @param2 : the number of diagonal pieces
+         - @param3 : list of valid moves so far
+         - @param4 :the diagonal direction to search
+         - @param5 : player pieces
+         - @param6 : enemy pieces
+         - @param7 : current state of the board
+        
+         - This function will aggregate all of the valid moves in the diagonal direction
+            - To do so, it will check points along the horizontal path that would be allowed by the number of diagonal pieces passed in 
+        */
+        
         int currentCol = piece.getRelativeY();
         int currentRow = piece.getRelativeX();
         Boolean isTopRightSearch    = false;
@@ -1024,6 +1162,7 @@ public class GameBoard extends javax.swing.JFrame {
         Boolean isTopLeftToBottomRightSearch    = false;
         Boolean isBottomLeftToTopRightSearch = false;
       
+        // figure out which direction in the diagonal to search
         switch(diagonalDirection){
             case "topLeftToBottomRight":
                 isTopLeftToBottomRightSearch = true;
@@ -1032,7 +1171,7 @@ public class GameBoard extends javax.swing.JFrame {
                 isBottomLeftToTopRightSearch = true;
                 break;
         }
-        
+        // setting corresponding flags
         if (isTopLeftToBottomRightSearch){
             isTopLeftSearch     = true;
             isBottomRightSearch = true;
@@ -1042,7 +1181,8 @@ public class GameBoard extends javax.swing.JFrame {
             isTopRightSearch     = true;
             isBottomLeftSearch   = true;
         }
-
+        
+        // default intializatioon
         int highBoundedCol = 0; 
         int lowBoundedCol  = 0;
         int highBoundedRow = 0;
@@ -1054,6 +1194,7 @@ public class GameBoard extends javax.swing.JFrame {
 //        highBoundedRow = (highBoundedRow > (ROWS-1)) ? -1 : highBoundedRow;
 //        lowBoundedRow  = (lowBoundedRow < 0)         ? -1 : lowBoundedRow;
         
+        // only create a left or right move if it is within the board limits & is for the specific search in a certain diagonal direction
         if(isTopRightSearch || isBottomRightSearch){
             highBoundedCol = currentCol + numOfDiagonalPieces;
             highBoundedCol = (highBoundedCol > (COLUMNS-1)) ? -1 : highBoundedCol;
@@ -1074,6 +1215,7 @@ public class GameBoard extends javax.swing.JFrame {
             lowBoundedCol  = (lowBoundedCol < 0) ? -1 : lowBoundedCol;
         }
         
+        // only create a left or right move if it is within the board limits & is for the specific search in a certain diagonal direction
         Point topLeftMove     = null;
         Point topRightMove    = null;
         Point bottomRightMove = null; 
@@ -1112,6 +1254,8 @@ public class GameBoard extends javax.swing.JFrame {
                 bottomLeftMove = null;
         }
         
+        // check if player pieces have the point... if so get rid of it
+        // check if friendly in location - BAD, don't add to list of valid moves     
         if (copiedPlayers.containsKey(topRightMove))
             topRightMove = null;
         if (copiedPlayers.containsKey(bottomRightMove))
@@ -1186,7 +1330,7 @@ public class GameBoard extends javax.swing.JFrame {
             if ( (topRightMove==null) && (bottomRightMove==null) && (bottomLeftMove==null) && (topLeftMove==null) )
                 return;
             
-            // check if Enemy in location - doesn't really matter at this point... just make sure to check when moving so the GUI can be updated accordingly
+            // check if Enemy in location - if so, add true to the list of valid moves, so the move function can takethe necessary actions
             if (topRightMove != null){
                 Boolean isEnemyInLoc = (isPointAnEnemy(topRightMove, copiedEnemies.keySet())) ? true : false;
                 validMoves.put(copiedSquares.get(topRightMove), isEnemyInLoc);
@@ -1210,6 +1354,7 @@ public class GameBoard extends javax.swing.JFrame {
     }
  
     /*
+    - Deprecated logic
     public static LinkedHashMap<GameSquare, Boolean> getListOfPossibleMoves(GameSquare currentSquare){
         LinkedHashMap<GameSquare, Boolean> validMoves = new LinkedHashMap<>();
         int numHorizontalCheckers = getNumOfHorizontalPieces(currentSquare);
@@ -1235,26 +1380,39 @@ public class GameBoard extends javax.swing.JFrame {
                                                                                      LinkedHashMap<Point, GameSquare> copiedPlayers,
                                                                                      LinkedHashMap<Point, GameSquare> copiedEnemies,
                                                                                      LinkedHashMap<Point, GameSquare> copiedSquares){
-        LinkedHashMap<GameSquare, Boolean> validMoves = new LinkedHashMap<>();
-        int numHorizontalCheckers = getNumOfHorizontalPieces(currentSquare, copiedSquares);
-        int numVerticalCheckers   = getNumOfVerticalPieces(currentSquare, copiedSquares);
-        int numTopRightDiagonalCheckers      = getNumOfDiagonalPieces(currentSquare, "topLeftToBottomRight", copiedSquares);
-        int numBottomRightDiagonalCheckers   = getNumOfDiagonalPieces(currentSquare, "bottomLeftToTopRight", copiedSquares);
-        
-        getValidMovesInHorizontal(currentSquare, numHorizontalCheckers, validMoves, copiedPlayers, copiedEnemies, copiedSquares);
-        getValidMovesInVertical(currentSquare,   numVerticalCheckers,   validMoves, copiedPlayers, copiedEnemies, copiedSquares);
-        getValidMovesInDiagonal(currentSquare,   numTopRightDiagonalCheckers,    validMoves, "topLeftToBottomRight", copiedPlayers, copiedEnemies, copiedSquares);
-        getValidMovesInDiagonal(currentSquare,   numBottomRightDiagonalCheckers, validMoves, "bottomLeftToTopRight", copiedPlayers, copiedEnemies, copiedSquares);
+            /*
+             - @param1 : square to get possible moves for
+             - @param2 : player pieces
+             - @param3 : enemy peices
+             - @param4 : current state of the game baord
+             - @return  : LinkedHashMap<PossibleSquaresToMoveTo, isEnemyInLoc>
+                - will return a list of all possible moves, and if an enemy exists in the valid move
+            */
+            LinkedHashMap<GameSquare, Boolean> validMoves = new LinkedHashMap<>();
+            int numHorizontalCheckers = getNumOfHorizontalPieces(currentSquare, copiedSquares); // get total number of pieces in the horizontal direction
+            int numVerticalCheckers   = getNumOfVerticalPieces(currentSquare, copiedSquares); // get total number of pieces in the vertical direction
+            int numTopRightDiagonalCheckers      = getNumOfDiagonalPieces(currentSquare, "topLeftToBottomRight", copiedSquares); // get total number of pieces from top left to bottom right
+            int numBottomRightDiagonalCheckers   = getNumOfDiagonalPieces(currentSquare, "bottomLeftToTopRight", copiedSquares); // get total number of pieces from bottom left to top right
+
+            getValidMovesInHorizontal(currentSquare, numHorizontalCheckers, validMoves, copiedPlayers, copiedEnemies, copiedSquares); // get all valid moves in horizontal
+            getValidMovesInVertical(currentSquare,   numVerticalCheckers,   validMoves, copiedPlayers, copiedEnemies, copiedSquares); // get all valid moves in vertical 
+            getValidMovesInDiagonal(currentSquare,   numTopRightDiagonalCheckers,    validMoves, "topLeftToBottomRight", copiedPlayers, copiedEnemies, copiedSquares); // get all valid moves from top left to bottom right
+            getValidMovesInDiagonal(currentSquare,   numBottomRightDiagonalCheckers, validMoves, "bottomLeftToTopRight", copiedPlayers, copiedEnemies, copiedSquares); // get all valid moves from bottom left to top right
         
 //        System.out.println("--------");
 //        System.out.println("List of Valid Moves...");
 //        for (GameSquare square : validMoves.keySet()){
 //           System.out.println("Sqaure Loc: " + square.getRelativeLoc() + " color: " + square.pieceColor());
 //        }
-        return validMoves;
+        return validMoves; // return list of valid moves
     }
     
     public static void setGrayBoxPropertiesFor(GameSquare oldLoc){
+        /*
+         - @param1 : the old square that the piece used to be in and has moved away from 
+         - This function will make the passed in square a gray box that cannot be moved (is not a piece)
+            - Will update the GUI
+        */
         oldLoc.markSquareAsEmpty();
         oldLoc.setText("");
         oldLoc.setPieceColor("none");
@@ -1262,11 +1420,24 @@ public class GameBoard extends javax.swing.JFrame {
     }
     
     public static void setGrayPropertiesWithoutUpdatingGUIFor(GameSquare oldLoc){
+        /*
+         - @param1 : the old square that the piece used to be in and has moved away from 
+         - This function will make the passed in square a gray box that cannot be moved (is not a piece)
+            - Will not update the GUI
+        */
         oldLoc.markSquareAsEmpty();
         oldLoc.setPieceColor("none");
     }
     
     public static void updateBoxColoring(GameSquare oldLoc, GameSquare newLoc){
+        /*
+          - @param1 : location of the piece being moved
+          - @param2 : location the piece is being moved to 
+          - Updates the colors of the squares
+            - The oldLoc will become gray as it is now a regular square on the board (not a piece)
+            - The newLoc will take on the qualities of the oldLoc (the piece being moved)
+            - This will update the GUI
+        */
         newLoc.setBackground(oldLoc.getBackground());
         newLoc.setText(oldLoc.getText());
 //        newLoc.setRelativeLoc(oldLoc.getRelativeX(), oldLoc.getRelativeY()); The new loc should retain its own location 
@@ -1276,20 +1447,44 @@ public class GameBoard extends javax.swing.JFrame {
     }
     
     public static void updateBoxColorPropertiesNotGUI(GameSquare oldLoc, GameSquare newLoc){
+        /*
+          - @param1 : location of the piece being moved
+          - @param2 : location the piece is being moved to 
+          - Updates the colors of the squares
+            - The oldLoc will become gray as it is now a regular square on the board (not a piece)
+            - The newLoc will take on the qualities of the oldLoc (the piece being moved)
+            - This will not update the GUI
+        */
         newLoc.setPieceColor(oldLoc.pieceColor());
         newLoc.makeSquarePlayer();
         setGrayBoxPropertiesFor(oldLoc);
     }
     
     public static void updateAllSquares(Point pt, GameSquare square){
+        /*
+         - @param1 : the point to be updated
+         - @param2 : the updated square to be saved
+        */
         squares.put(pt, square);
     }
     
     public static void updateAllCopiedSquares(Point pt, GameSquare square, LinkedHashMap<Point, GameSquare> copiedSquares){
+        /*
+         - @param1 : the point to be updated
+         - @param2 : the updated square to be saved
+         - @param3 : the current state of the board (not the one stored on the GameBoard object) - used for calls in the Alpha Beta Algorithm
+        */
         copiedSquares.put(pt, square);
     }
     
     public static void move(GameSquare oldLoc, GameSquare newLoc){
+        /*
+         - @param1 : location of the piece being moved
+         - @param2 : location the piece is being moved to
+        
+        - This function will move the piece from the oldLoc to the newLoc, and will update the GUI
+        */
+        
         // Assumes the movement from old to new locations is valid... will only check to see if the movement is eating another player or not
         
         // handle player to enemy loc
@@ -1320,7 +1515,13 @@ public class GameBoard extends javax.swing.JFrame {
     }
     
     public static void moveWithoutUpdatingGUI(GameSquare oldLoc, GameSquare newLoc, LinkedHashMap<Point, GameSquare> copiedPlayerPieces, LinkedHashMap<Point, GameSquare> copiedEnemyPieces, LinkedHashMap<Point, GameSquare> copiedSquares){
-        System.out.println("Moving piece without GUI ");
+//        System.out.println("Moving piece without GUI ");
+        /*
+         - @param1 : location of the piece being moved
+         - @param2 : location the piece is being moved to
+        
+        - This function will move the piece from the oldLoc to the newLoc, but will not update the GUI
+        */
         Boolean playerEatingEnemy = copiedEnemyPieces.containsKey(newLoc.getRelativeLoc());
         if (playerEatingEnemy){
             int playersEatCount = (oldLoc.pieceColor().equals("White")) ? numPiecesWhiteAte : numPiecesBlackAte;
@@ -1342,6 +1543,16 @@ public class GameBoard extends javax.swing.JFrame {
     }
     
     public static synchronized Boolean checkIfNeighboringPiecesAreSameColor(Point point, LinkedHashMap<Point, Boolean> pieces, int numPiecesExplored){
+        /*
+         - @param1 : point to start with
+         - @param2 : the pieces of the player being checked
+         - @param3 : the total number of piecex explored
+         - @return : whether or not the pieces (passed in) are in a winning position
+        
+         - This function recursively checks to see whether or not the pieces passed in are in a winning configuration (as defined by the project guidelines)
+        */
+        
+        // aggregates all possible squares around the current square
         Point left        = new Point ((int) point.getX() , (int) point.getY() - 1);
         Point right       = new Point ((int) point.getX() , (int) point.getY() + 1);
         Point top         = new Point ((int) point.getX() - 1 , (int) point.getY());
@@ -1350,8 +1561,9 @@ public class GameBoard extends javax.swing.JFrame {
         Point topRight    = new Point ((int) point.getX() - 1 , (int) point.getY() + 1);  
         Point bottomRight = new Point ((int) point.getX() + 1 , (int) point.getY() + 1);  
         Point bottomLeft  = new Point ((int) point.getX() + 1 , (int) point.getY() - 1); 
-        Boolean isAllTrue = false;
+        Boolean isAllTrue = false; // if pieces are in winning configuration
         
+        // checks to see if all of the pieces are directly next to one another (winning configuration)
         for (Point currentPoint : pieces.keySet()){
             if (!pieces.get(currentPoint).equals(true)){
                 isAllTrue = false;
@@ -1363,6 +1575,7 @@ public class GameBoard extends javax.swing.JFrame {
         if (isAllTrue)
             return true;
         
+        // check to see if the adjacent points created above exist within the player's pieces' domain
         Boolean neighborIsFriendly = false;
         numPiecesExplored++;
         if (pieces.containsKey(left)        || 
@@ -1379,6 +1592,7 @@ public class GameBoard extends javax.swing.JFrame {
         }else
             return false;
         
+        // recursively call this function to determine if all pieces are neighboring each other, ultimately deciding if the pieces passed in are in a winning configuration
         if (pieces.containsKey(left) && pieces.get(left).equals(false))
             neighborIsFriendly = checkIfNeighboringPiecesAreSameColor(left, pieces, numPiecesExplored);
         
@@ -1406,6 +1620,7 @@ public class GameBoard extends javax.swing.JFrame {
 //        if (numPiecesExplored != pieces.size()) // piece is not attainable from current config
 //            return false;
         
+        // checks to see if all of the pieces are directly next to one another (winning configuration)
         for (Point currentPoint : pieces.keySet()){
             if (!pieces.get(currentPoint).equals(true)){
                 isAllTrue = false;
@@ -1414,13 +1629,22 @@ public class GameBoard extends javax.swing.JFrame {
             isAllTrue = true;
         }
         
+        // if all pieces are next to each other, then in winning configuration, and return true
         if (isAllTrue)
             return true;
         
+        // if we get to this point, then the passed in pieces are not in a game winning configuration
         return false;
     }
     
     public static synchronized void checkForWinningGameState(LinkedHashMap<Point, GameSquare> pieces, LinkedHashMap<Point, GameSquare> enemies){
+        /*
+         - @param1 : player's pieces (based on perspective as defined in the Alpha Beta Algorithm)
+         - @param2 : enemy's pieces (based on perspective as defined in the Alpha Beta Algorithm)
+        
+         - This function sets either 'playerWins' or 'enemyWins' to true if either the player or enemy has pieces in a winning configuration
+        */
+        
         // Assume no player has won yet
         playerWins = false;
         enemyWins = false;
@@ -1445,9 +1669,10 @@ public class GameBoard extends javax.swing.JFrame {
         // the checkIfNeighboringPiecesAreSameColor function performs the check logic
         LinkedHashMap<Point, Boolean> playerPiecesToExplore = new LinkedHashMap();
         for (Point point : pieces.keySet())
-            playerPiecesToExplore.put(point, false);
+            playerPiecesToExplore.put(point, false); // we assume all pieces are not next to each other
         int timesChecked = 0;
         
+        // get entry of the first piece, and submit to the 'checkIfNeighboringPiecesAreSameColor' to determine if in winning configuration
         Map.Entry<Point, Boolean> entry = playerPiecesToExplore.entrySet().iterator().next();
         Point point = entry.getKey();
 
@@ -1698,7 +1923,12 @@ public class GameBoard extends javax.swing.JFrame {
     private static Boolean enemyWins   = false;   // denotes whether or not the player has won
     private static Boolean playerWins  = false;   // denotes whether or not an enemy has won
     private static Boolean playerMoved = false;   // denotes wh
-    private static int maxDepth = 0;
+    private static int maxDepth   = 0; // max depth of the alpha beta algorithm
+    private static int totalNodes = 0; // total nodes generate for alpha beta algorithm
+    private static int totalEvalCalls = 0; // total times eval called in MAX
+//    private static int totalMINEvalCalls = 0; // total times eval called in MIN
+    private static int totalMAXPrunes = 0; // total times pruned in MAX
+    private static int totalMINPrunes = 0; // total times pruned in MIN
     private static final int infinity  = 1000;    // the infinity value used with the Alpha Beta Algorithm
     public static Boolean gameOver   = false;     // signals to the game whether or not the game is over
     public static Boolean isFirstRun = true;      // signals to the game if it is the first run of the game
